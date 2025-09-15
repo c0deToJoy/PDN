@@ -3,7 +3,7 @@
 # All of these runs of ./example are a test case
 # We want to cover 100% of example through these tests
 run-tests-coverage: build
-	-./prog
+	-./prog #Test with no arguments
 	./prog 1 2 3 4 5 6 7 #Test with a sorted array
 	./prog 7 6 5 4 3 2 1 #Test with a reverse sorted array
 	./prog 7 7 7 7 7 7 7 #Test with all identical elements
