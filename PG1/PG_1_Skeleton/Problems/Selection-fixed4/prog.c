@@ -1,21 +1,14 @@
-// My Selection sort implementation from PG0, loop unrolled
+// My Selection sort implementation from PG0
 #include <stdio.h>
 #include <stdlib.h>
 
 void selectionSort(int arr[], int n) { // Selection sort function
   for (int i = 0; i < n - 1; i++) { // Iterate through the array
     int minIdx = i; // Initialize the minimum index
-    int j = i + 1;
-    // Unroll inner loop by 4
-    for (; j + 3 < n; j += 4) {
-      if (arr[j] < arr[minIdx]) minIdx = j;
-      if (arr[j + 1] < arr[minIdx]) minIdx = j + 1;
-      if (arr[j + 2] < arr[minIdx]) minIdx = j + 2;
-      if (arr[j + 3] < arr[minIdx]) minIdx = j + 3;
-    }
-    // Handle remaining elements
-    for (; j < n; j++) {
-      if (arr[j] < arr[minIdx]) minIdx = j;
+    for (int j = i + 1; j < n; j++) { // Find the minimum element
+      if (arr[j] < arr[minIdx]) { // Compare elements
+        minIdx = j; // Update the minimum index
+      }
     }
     if (minIdx != i) { // Swap elements if needed
       int temp = arr[i]; // Store the current element
