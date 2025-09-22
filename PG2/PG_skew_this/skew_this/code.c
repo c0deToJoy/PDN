@@ -352,7 +352,12 @@ void student_apply_weight_then_activate_fusion(int size, float *src, float *dst)
 
   for (int i = 0; i < size; ++i)
   {
-    /* STUDENT_TODO: fix this block */
+    x[i] = alpha * src[i] + y;
+    
+    if (x[i] < 0)
+      dst[i] = 0.0f;
+    else
+      dst[i] = x[i];
   }
 }
 
