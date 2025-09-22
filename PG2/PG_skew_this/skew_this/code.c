@@ -280,14 +280,14 @@ void student_axpy_sftwr_pipeln_peel(int size, float *src, float *dst)
   float alpha = 2.0f;
   float y = 1.0f;
 
-  float reg_0 = alpha * src[0];
+  float reg_0 = alpha * src[0]; // Peeling: first iteration done before loop
   for (int i = 0; i < size - 1; ++i)
   {
     float reg_1 = reg_0;
     reg_0 = alpha * src[i + 1];
     dst[i] = reg_1 + y;
   }
-  dst[size - 1] = reg_0 + y;
+  dst[size - 1] = reg_0 + y; // Peeling: last iteration done after loop
 }
 
 void test_axpy_sftwr_pipeln_peel()
@@ -352,9 +352,10 @@ void student_apply_weight_then_activate_fusion(int size, float *src, float *dst)
 
   for (int i = 0; i < size; ++i)
   {
-    x[i] = alpha * src[i] + y;
+    //Fuse both steps into one loop
+    x[i] = alpha * src[i] + y; // apply weight
 
-    if (x[i] < 0)
+    if (x[i] < 0) // activate with relu
       dst[i] = 0.0f;
     else
       dst[i] = x[i];
@@ -408,11 +409,11 @@ void student_deinterleave_fission(int size, float *src, float *dst)
 
   for (int i = 0; i < size / 2; ++i)
   {
-    dst[i] = src[2 * i];
+    dst[i] = src[2 * i]; // first split for even indices
   }
   for (int i = size / 2; i < size; ++i)
   {
-    dst[i] = src[2 * (i - size / 2) + 1];
+    dst[i] = src[2 * (i - size / 2) + 1]; //second split for odd indices
   }
 }
 
@@ -476,7 +477,7 @@ void student_matvec_4x4_colmaj_8xfloat_interchange(float *src, float *x, float *
     /* STUDENT_TODO: HINT: might need to do something to dst */
     for (int i = 0; i < m; ++i)
     {
-      /* STUDENT_TODO: fix this block */
+      dst[i] += src[i * cs_s + j * rs_s] * x[j]; // inner loop is contiguous in i
     }
   }
 }
