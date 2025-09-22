@@ -139,14 +139,14 @@ void student_I_tensor_DFT2_unswitch(int size, float *src, float *dst) {
       for (int io = 0; io < size; io += 2)
       {
         int i = io + ii;
-        dst[i] = src[i] - src[i+1];
+        dst[i] = src[i] - src[i+1]; // Even index
       }
     }
     else {
       for (int io = 0; io < size; io += 2)
       {
         int i = io + ii;
-        dst[i] = src[i-1] + src[i];
+        dst[i] = src[i-1] + src[i]; // Odd index
       }
     }
 }
@@ -198,9 +198,9 @@ void reference_rotate_no_mod(int size, int shift, float *src, float *dst) {
 
 void student_rotate_no_mod_index_set_splitting(int size, int shift, float *src, float *dst) {
 
-  int index_start = 0;
-  int index_split = size - shift;
-  int index_end = size;
+  int index_start = 0; // Start section at 0
+  int index_split = size - shift; // Split section at size - shift to avoid mod
+  int index_end = size; // End section at size
 
   for (int i = index_start; i < index_split; ++i)
   {
@@ -284,7 +284,7 @@ void student_axpy_sftwr_pipeln_peel(int size, float *src, float *dst)
   for (int i = 0; i < size - 1; ++i)
   {
     float reg_1 = reg_0;
-    reg_0 = alpha * src[i + 1];
+    reg_0 = alpha * src[i + 1]; // Reg_0 always holds next src value
     dst[i] = reg_1 + y;
   }
   dst[size - 1] = reg_0 + y; // Peeling: last iteration done after loop
@@ -528,7 +528,7 @@ void student_axpy_stripmine(int size, float *src, float *dst)
   float y = 1.0f;
 
   int block = 3;
-  int split = /*STUDENT_TODO: fix this line */ -1;
+  int split = (size / block) * block; // Split where full blocks end
 
   // Note: small check to make sure first loop is executed.
   if (split <= block)
@@ -538,11 +538,11 @@ void student_axpy_stripmine(int size, float *src, float *dst)
   {
     for (int ii = 0; ii < block; ++ii)
     {
-      dst[ii + io] = /*STUDENT_TODO: fix this line */ -1;
+      dst[ii + io] = alpha * src[ii + io] + y; // Inner loop processes a block
     }
   }
   for (int i = split; i < size; ++i)
-    dst[i] = /*STUDENT_TODO: fix this line */ -1;
+    dst[i] = alpha * src[i] + y; // Handle leftover elements
 }
 
 void test_axpy_stripmine()
