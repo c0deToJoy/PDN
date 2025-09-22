@@ -280,14 +280,14 @@ void student_axpy_sftwr_pipeln_peel(int size, float *src, float *dst)
   float alpha = 2.0f;
   float y = 1.0f;
 
-  float reg_0 = /* STUDENT_TODO: fix this line */ -1;
+  float reg_0 = alpha * src[0];
   for (int i = 0; i < size - 1; ++i)
   {
     float reg_1 = reg_0;
     reg_0 = alpha * src[i + 1];
     dst[i] = reg_1 + y;
   }
-  dst[size - 1] = /* STUDENT_TODO:fix this line */ -1;
+  dst[size - 1] = reg_0 + y;
 }
 
 void test_axpy_sftwr_pipeln_peel()
