@@ -353,7 +353,7 @@ void student_apply_weight_then_activate_fusion(int size, float *src, float *dst)
   for (int i = 0; i < size; ++i)
   {
     x[i] = alpha * src[i] + y;
-    
+
     if (x[i] < 0)
       dst[i] = 0.0f;
     else
@@ -408,11 +408,11 @@ void student_deinterleave_fission(int size, float *src, float *dst)
 
   for (int i = 0; i < size / 2; ++i)
   {
-    dst[i] = /*STUDENT_TODO: fix this line */ -1;
+    dst[i] = src[2 * i];
   }
   for (int i = size / 2; i < size; ++i)
   {
-    dst[i] = /*STUDENT_TODO: fix this line */ -1;
+    dst[i] = src[2 * (i - size / 2) + 1];
   }
 }
 
