@@ -198,9 +198,9 @@ void reference_rotate_no_mod(int size, int shift, float *src, float *dst) {
 
 void student_rotate_no_mod_index_set_splitting(int size, int shift, float *src, float *dst) {
 
-  int index_start = /* STUDENT_TODO: fix this value */ -1;
-  int index_split = /* STUDENT_TODO: fix this value */ -1;
-  int index_end = /* STUDENT_TODO: fix this value */ -1;
+  int index_start = 0;
+  int index_split = size - shift;
+  int index_end = size;
 
   for (int i = index_start; i < index_split; ++i)
   {
