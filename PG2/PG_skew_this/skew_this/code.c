@@ -608,8 +608,8 @@ void student_blur_skew(int size, float *src, float *dst)
 
     for (int p = 0; p < 3; ++p)
     {
-      int index = /* STUDENT_TODO: fix this line*/ 0;
-      dst[index] += w[p] * src[i];
+      int index = i; // Skewing: index depends only on i
+      dst[index] += w[p] * src[(i + p) % size]; // src access is circular
     }
   }
 }
