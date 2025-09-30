@@ -8,7 +8,7 @@ int main(int argc, char *argv[]) {
         return 1;
     }
 
-    // Open input
+    // Open input file
     FILE *inputFileName = fopen(argv[1], "r"); // Get input file name from args
     if (inputFileName == NULL) { // If input file is null
         fprintf(stderr, "Error: Could not open input file %s\n", argv[1]); // Print error & return
