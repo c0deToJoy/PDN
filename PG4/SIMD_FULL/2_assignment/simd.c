@@ -185,7 +185,7 @@ void student_reverse_8xfloat(float *src, float *dst)
 
 
   // STUDENT_TODO: Uncomment this instrumentation block, comment out the others, then run 'make measure-osaca'
-  //BEGIN_INSTRUMENTATION;
+  BEGIN_INSTRUMENTATION;
   {
     /*
        STUDENT_TODO: Add student code below.
@@ -195,12 +195,14 @@ void student_reverse_8xfloat(float *src, float *dst)
     // ...
     // ...
     // output = ...;
+    __m256i idx = _mm256_setr_epi32(7,6,5,4,3,2,1,0); // create index vector
+    output = _mm256_permutevar8x32_ps(input, idx); // permute input according to index vector
 
     /*
        End of student code.
     */
   }
-  //END_INSTRUMENTATION;
+  END_INSTRUMENTATION;
 
   // Store the result back to memory.
   _mm256_storeu_ps(&dst[0],output);

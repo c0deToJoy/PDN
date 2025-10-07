@@ -1,0 +1,35 @@
+Open Source Architecture Code Analyzer (OSACA) - 0.7.1
+Analyzed file:      simd.s
+Architecture:       SPR
+Timestamp:          2025-10-07 15:45:58
+
+-------------------------- WARNING: No micro-architecture was specified -------------------------
+         A default uarch for this particular ISA was used. Specify the uarch with --arch.
+         See --help for more information.
+-------------------------------------------------------------------------------------------------
+
+ P - Throughput of LOAD operation can be hidden behind a past or future STORE instruction
+ * - Instruction micro-ops not bound to a port
+ X - No throughput/latency information for this instruction in data file
+
+
+Combined Analysis Report
+------------------------
+                                                Port pressure in cycles                                                 
+     |  0   - 0DV  |  1   - 1DV  |  2   |  3   |  4   |  5   |  6   |  7   |  8   |  9   |  10  |  11  ||  CP  | LCD  |
+-----------------------------------------------------------------------------------------------------------------------
+ 338 |             |             |      |      |      |      |      |      |      |      |      |      ||      |      |   # 0 "" 2
+ 339 |             |             |      |      |      |      |      |      |      |      |      |      ||      |      |   #NO_APP
+ 340 |             |             | 0.33 | 0.33 |      |      |      |      |      |      |      | 0.33 ||  5.0 |      |   vmovss (%rax), %xmm0
+ 341 |             |             |      |      | 0.50 |      |      | 0.50 | 0.50 | 0.50 |      |      ||  0.0 |      |   vmovss %xmm0, (%rsi)
+ 342 |             |             |      |      |      |      |      |      |      |      |      |      ||      |      |   #APP
+ 343 |             |             |      |      |      |      |      |      |      |      |      |      ||      |      |   # 173 "simd.c" 1
+
+                                   0.33   0.33   0.50                 0.50   0.50   0.50          0.33       5    0.0  
+
+
+
+
+Loop-Carried Dependencies Analysis Report
+-----------------------------------------
+
