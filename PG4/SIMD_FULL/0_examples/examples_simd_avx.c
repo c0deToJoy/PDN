@@ -38,9 +38,7 @@
   why they exist is that someone from marketing thought it
   was a great idea, and the engineers tasked their interns
   with the most.... potential.... to implement them.
-  
- 
-  
+
 */
 
 #include <math.h>
@@ -102,14 +100,14 @@ void loadu_example()
 
   // This {BEGIN,END}_INSTRUMENTATION marks off a block to be simulated with 'make measure-osaca'
   // Only one block can be measured at a time, so comment out all the others.
-  BEGIN_INSTRUMENTATION; // Mark the start of the code for osaca/mca  
+  //BEGIN_INSTRUMENTATION; // Mark the start of the code for osaca/mca  
   /////////////////////////
   // STUDENT_TODO: Note that we are using loadu/storeu instead of load/store which assume aligned data.
   //               Aligned data is 'aligned' to 64B boundaries, i.e. addr%64 == 0
   //               If you need aligned data, you can use the special malloc, memalign.
   __m256 avect = _mm256_loadu_ps(&a[0]);
   /////////////////////////
-  END_INSTRUMENTATION; // 
+  //END_INSTRUMENTATION; // 
   
   print_8xfloat_vect("av",avect);
   printf("\n");
