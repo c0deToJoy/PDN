@@ -330,22 +330,8 @@ reference_reverse_8xfloat:
 	addq	$28, %rsi
 	addq	$32, %rdi
 .L46:
-#APP
-# 169 "simd.c" 1
-	
-	 movl    $111,%ebx #IACA/OSACA START MARKER
-	 .byte   100,103,144     #IACA/OSACA START MARKER
-# 0 "" 2
-#NO_APP
 	vmovss	(%rax), %xmm0
 	vmovss	%xmm0, (%rsi)
-#APP
-# 173 "simd.c" 1
-	
-	 movl    $222,%ebx #IACA/OSACA START MARKER
-	 .byte   100,103,144     #IACA/OSACA START MARKER
-# 0 "" 2
-#NO_APP
 	addq	$4, %rax
 	subq	$4, %rsi
 	cmpq	%rdi, %rax
@@ -360,40 +346,25 @@ student_reverse_8xfloat:
 .LFB6445:
 	.cfi_startproc
 	endbr64
-	vmovups	(%rdi), %ymm0
-#APP
-# 188 "simd.c" 1
-	
-	 movl    $111,%ebx #IACA/OSACA START MARKER
-	 .byte   100,103,144     #IACA/OSACA START MARKER
-# 0 "" 2
-#NO_APP
-	vmovdqa	.LC8(%rip), %ymm1
-	vpermps	%ymm0, %ymm1, %ymm0
-#APP
-# 205 "simd.c" 1
-	
-	 movl    $222,%ebx #IACA/OSACA START MARKER
-	 .byte   100,103,144     #IACA/OSACA START MARKER
-# 0 "" 2
-#NO_APP
+	vmovdqa	.LC8(%rip), %ymm0
+	vpermps	(%rdi), %ymm0, %ymm0
 	vmovups	%ymm0, (%rsi)
 	ret
 	.cfi_endproc
 .LFE6445:
 	.size	student_reverse_8xfloat, .-student_reverse_8xfloat
 	.section	.rodata.str1.1
-.LC17:
+.LC18:
 	.string	"test_reverse_8xfloat: "
-.LC19:
-	.string	"FAIL\n"
 .LC20:
-	.string	" a"
+	.string	"FAIL\n"
 .LC21:
-	.string	"bt"
+	.string	" a"
 .LC22:
-	.string	"br"
+	.string	"bt"
 .LC23:
+	.string	"br"
+.LC24:
 	.string	"PASS\n"
 	.text
 	.globl	test_reverse_8xfloat
@@ -402,17 +373,15 @@ test_reverse_8xfloat:
 .LFB6446:
 	.cfi_startproc
 	endbr64
-	pushq	%r12
-	.cfi_def_cfa_offset 16
-	.cfi_offset 12, -16
 	pushq	%rbp
-	.cfi_def_cfa_offset 24
-	.cfi_offset 6, -24
+	.cfi_def_cfa_offset 16
+	.cfi_offset 6, -16
+	movq	%rsp, %rbp
+	.cfi_def_cfa_register 6
 	pushq	%rbx
-	.cfi_def_cfa_offset 32
-	.cfi_offset 3, -32
+	andq	$-32, %rsp
 	addq	$-128, %rsp
-	.cfi_def_cfa_offset 160
+	.cfi_offset 3, -24
 	movq	%fs:40, %rax
 	movq	%rax, 120(%rsp)
 	xorl	%eax, %eax
@@ -434,38 +403,36 @@ test_reverse_8xfloat:
 	vmovss	%xmm0, 72(%rsp)
 	vmovss	%xmm0, 76(%rsp)
 	leaq	48(%rsp), %rbx
-	leaq	16(%rsp), %r12
+	leaq	16(%rsp), %rdi
 	movq	%rbx, %rsi
-	movq	%r12, %rdi
 	call	reference_reverse_8xfloat
-	leaq	80(%rsp), %rbp
-	movq	%rbp, %rsi
-	movq	%r12, %rdi
-	call	student_reverse_8xfloat
-	movq	%rbp, %rdx
+	vmovdqa	.LC8(%rip), %ymm0
+	vpermps	.LC17(%rip), %ymm0, %ymm0
+	vmovups	%ymm0, 80(%rsp)
+	leaq	80(%rsp), %rdx
 	movq	%rbx, %rsi
 	movl	$8, %edi
 	call	max_pair_wise_diff
 	vmovss	%xmm0, 12(%rsp)
-	leaq	.LC17(%rip), %rsi
+	leaq	.LC18(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
 	vcvtss2sd	12(%rsp), %xmm0, %xmm0
-	vcomisd	.LC18(%rip), %xmm0
+	vcomisd	.LC19(%rip), %xmm0
 	jbe	.L55
-	leaq	.LC19(%rip), %rsi
+	leaq	.LC20(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
-	movq	%r12, %rsi
-	leaq	.LC20(%rip), %rdi
-	call	print_8xfloat_mem
-	movq	%rbx, %rsi
+	leaq	16(%rsp), %rsi
 	leaq	.LC21(%rip), %rdi
 	call	print_8xfloat_mem
-	movq	%rbp, %rsi
+	movq	%rbx, %rsi
 	leaq	.LC22(%rip), %rdi
+	call	print_8xfloat_mem
+	leaq	80(%rsp), %rsi
+	leaq	.LC23(%rip), %rdi
 	call	print_8xfloat_mem
 	leaq	.LC7(%rip), %rsi
 	movl	$2, %edi
@@ -475,19 +442,14 @@ test_reverse_8xfloat:
 	movq	120(%rsp), %rax
 	subq	%fs:40, %rax
 	jne	.L57
-	subq	$-128, %rsp
+	movq	-8(%rbp), %rbx
+	leave
 	.cfi_remember_state
-	.cfi_def_cfa_offset 32
-	popq	%rbx
-	.cfi_def_cfa_offset 24
-	popq	%rbp
-	.cfi_def_cfa_offset 16
-	popq	%r12
-	.cfi_def_cfa_offset 8
+	.cfi_def_cfa 7, 8
 	ret
 .L55:
 	.cfi_restore_state
-	leaq	.LC23(%rip), %rsi
+	leaq	.LC24(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
@@ -528,14 +490,15 @@ student_rotate_by_4_8xfloat:
 .LFB6448:
 	.cfi_startproc
 	endbr64
-	vbroadcastss	.LC16(%rip), %ymm0
+	vmovdqa	.LC25(%rip), %ymm0
+	vpermps	(%rdi), %ymm0, %ymm0
 	vmovups	%ymm0, (%rsi)
 	ret
 	.cfi_endproc
 .LFE6448:
 	.size	student_rotate_by_4_8xfloat, .-student_rotate_by_4_8xfloat
 	.section	.rodata.str1.1
-.LC25:
+.LC26:
 	.string	"test_rotate_by_4_8xfloat: "
 	.text
 	.globl	test_rotate_by_4_8xfloat
@@ -550,7 +513,8 @@ test_rotate_by_4_8xfloat:
 	movq	%rsp, %rbp
 	.cfi_def_cfa_register 6
 	pushq	%rbx
-	subq	$136, %rsp
+	andq	$-32, %rsp
+	addq	$-128, %rsp
 	.cfi_offset 3, -24
 	movq	%fs:40, %rax
 	movq	%rax, 120(%rsp)
@@ -576,32 +540,33 @@ test_rotate_by_4_8xfloat:
 	leaq	16(%rsp), %rdi
 	movq	%rbx, %rsi
 	call	reference_rotate_by_4_8xfloat
-	vbroadcastss	.LC16(%rip), %ymm0
+	vmovdqa	.LC25(%rip), %ymm0
+	vpermps	.LC17(%rip), %ymm0, %ymm0
 	vmovups	%ymm0, 80(%rsp)
 	leaq	80(%rsp), %rdx
 	movq	%rbx, %rsi
 	movl	$8, %edi
 	call	max_pair_wise_diff
 	vmovss	%xmm0, 12(%rsp)
-	leaq	.LC25(%rip), %rsi
+	leaq	.LC26(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
 	vcvtss2sd	12(%rsp), %xmm0, %xmm0
-	vcomisd	.LC18(%rip), %xmm0
+	vcomisd	.LC19(%rip), %xmm0
 	jbe	.L68
-	leaq	.LC19(%rip), %rsi
+	leaq	.LC20(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
 	leaq	16(%rsp), %rsi
-	leaq	.LC20(%rip), %rdi
-	call	print_8xfloat_mem
-	movq	%rbx, %rsi
 	leaq	.LC21(%rip), %rdi
 	call	print_8xfloat_mem
-	leaq	80(%rsp), %rsi
+	movq	%rbx, %rsi
 	leaq	.LC22(%rip), %rdi
+	call	print_8xfloat_mem
+	leaq	80(%rsp), %rsi
+	leaq	.LC23(%rip), %rdi
 	call	print_8xfloat_mem
 	leaq	.LC7(%rip), %rsi
 	movl	$2, %edi
@@ -618,7 +583,7 @@ test_rotate_by_4_8xfloat:
 	ret
 .L68:
 	.cfi_restore_state
-	leaq	.LC23(%rip), %rsi
+	leaq	.LC24(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
@@ -659,14 +624,15 @@ student_rotate_by_2_8xfloat:
 .LFB6451:
 	.cfi_startproc
 	endbr64
-	vbroadcastss	.LC16(%rip), %ymm0
+	vmovdqa	.LC27(%rip), %ymm0
+	vpermps	(%rdi), %ymm0, %ymm0
 	vmovups	%ymm0, (%rsi)
 	ret
 	.cfi_endproc
 .LFE6451:
 	.size	student_rotate_by_2_8xfloat, .-student_rotate_by_2_8xfloat
 	.section	.rodata.str1.1
-.LC26:
+.LC28:
 	.string	"test_rotate_by_2_8xfloat: "
 	.text
 	.globl	test_rotate_by_2_8xfloat
@@ -681,7 +647,8 @@ test_rotate_by_2_8xfloat:
 	movq	%rsp, %rbp
 	.cfi_def_cfa_register 6
 	pushq	%rbx
-	subq	$136, %rsp
+	andq	$-32, %rsp
+	addq	$-128, %rsp
 	.cfi_offset 3, -24
 	movq	%fs:40, %rax
 	movq	%rax, 120(%rsp)
@@ -707,32 +674,33 @@ test_rotate_by_2_8xfloat:
 	leaq	16(%rsp), %rdi
 	movq	%rbx, %rsi
 	call	reference_rotate_by_2_8xfloat
-	vbroadcastss	.LC16(%rip), %ymm0
+	vmovdqa	.LC27(%rip), %ymm0
+	vpermps	.LC17(%rip), %ymm0, %ymm0
 	vmovups	%ymm0, 80(%rsp)
 	leaq	80(%rsp), %rdx
 	movq	%rbx, %rsi
 	movl	$8, %edi
 	call	max_pair_wise_diff
 	vmovss	%xmm0, 12(%rsp)
-	leaq	.LC26(%rip), %rsi
+	leaq	.LC28(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
 	vcvtss2sd	12(%rsp), %xmm0, %xmm0
-	vcomisd	.LC18(%rip), %xmm0
+	vcomisd	.LC19(%rip), %xmm0
 	jbe	.L81
-	leaq	.LC19(%rip), %rsi
+	leaq	.LC20(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
 	leaq	16(%rsp), %rsi
-	leaq	.LC20(%rip), %rdi
-	call	print_8xfloat_mem
-	movq	%rbx, %rsi
 	leaq	.LC21(%rip), %rdi
 	call	print_8xfloat_mem
-	leaq	80(%rsp), %rsi
+	movq	%rbx, %rsi
 	leaq	.LC22(%rip), %rdi
+	call	print_8xfloat_mem
+	leaq	80(%rsp), %rsi
+	leaq	.LC23(%rip), %rdi
 	call	print_8xfloat_mem
 	leaq	.LC7(%rip), %rsi
 	movl	$2, %edi
@@ -749,7 +717,7 @@ test_rotate_by_2_8xfloat:
 	ret
 .L81:
 	.cfi_restore_state
-	leaq	.LC23(%rip), %rsi
+	leaq	.LC24(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
@@ -790,14 +758,15 @@ student_rotate_by_1_8xfloat:
 .LFB6454:
 	.cfi_startproc
 	endbr64
-	vbroadcastss	.LC16(%rip), %ymm0
+	vmovdqa	.LC29(%rip), %ymm0
+	vpermps	(%rdi), %ymm0, %ymm0
 	vmovups	%ymm0, (%rsi)
 	ret
 	.cfi_endproc
 .LFE6454:
 	.size	student_rotate_by_1_8xfloat, .-student_rotate_by_1_8xfloat
 	.section	.rodata.str1.1
-.LC27:
+.LC30:
 	.string	"test_rotate_by_1_8xfloat: "
 	.text
 	.globl	test_rotate_by_1_8xfloat
@@ -812,7 +781,8 @@ test_rotate_by_1_8xfloat:
 	movq	%rsp, %rbp
 	.cfi_def_cfa_register 6
 	pushq	%rbx
-	subq	$136, %rsp
+	andq	$-32, %rsp
+	addq	$-128, %rsp
 	.cfi_offset 3, -24
 	movq	%fs:40, %rax
 	movq	%rax, 120(%rsp)
@@ -838,32 +808,33 @@ test_rotate_by_1_8xfloat:
 	leaq	16(%rsp), %rdi
 	movq	%rbx, %rsi
 	call	reference_rotate_by_1_8xfloat
-	vbroadcastss	.LC16(%rip), %ymm0
+	vmovdqa	.LC29(%rip), %ymm0
+	vpermps	.LC17(%rip), %ymm0, %ymm0
 	vmovups	%ymm0, 80(%rsp)
 	leaq	80(%rsp), %rdx
 	movq	%rbx, %rsi
 	movl	$8, %edi
 	call	max_pair_wise_diff
 	vmovss	%xmm0, 12(%rsp)
-	leaq	.LC27(%rip), %rsi
+	leaq	.LC30(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
 	vcvtss2sd	12(%rsp), %xmm0, %xmm0
-	vcomisd	.LC18(%rip), %xmm0
+	vcomisd	.LC19(%rip), %xmm0
 	jbe	.L94
-	leaq	.LC19(%rip), %rsi
+	leaq	.LC20(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
 	leaq	16(%rsp), %rsi
-	leaq	.LC20(%rip), %rdi
-	call	print_8xfloat_mem
-	movq	%rbx, %rsi
 	leaq	.LC21(%rip), %rdi
 	call	print_8xfloat_mem
-	leaq	80(%rsp), %rsi
+	movq	%rbx, %rsi
 	leaq	.LC22(%rip), %rdi
+	call	print_8xfloat_mem
+	leaq	80(%rsp), %rsi
+	leaq	.LC23(%rip), %rdi
 	call	print_8xfloat_mem
 	leaq	.LC7(%rip), %rsi
 	movl	$2, %edi
@@ -880,7 +851,7 @@ test_rotate_by_1_8xfloat:
 	ret
 .L94:
 	.cfi_restore_state
-	leaq	.LC23(%rip), %rsi
+	leaq	.LC24(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
@@ -915,7 +886,8 @@ student_transpose_4x2_colmaj_8xfloat:
 .LFB6457:
 	.cfi_startproc
 	endbr64
-	vbroadcastss	.LC16(%rip), %ymm0
+	vmovdqa	.LC31(%rip), %ymm0
+	vpermps	(%rdi), %ymm0, %ymm0
 	vmovups	%ymm0, (%rsi)
 	ret
 	.cfi_endproc
@@ -952,15 +924,25 @@ student_rotate_by_1_16xfloat:
 .LFB6459:
 	.cfi_startproc
 	endbr64
-	vbroadcastss	.LC16(%rip), %ymm0
-	vmovups	%ymm0, (%rsi)
+	vmovups	(%rdi), %ymm0
+	vmovups	32(%rdi), %ymm2
+	vblendps	$1, %ymm2, %ymm0, %ymm1
+	vmovdqa	.LC32(%rip), %ymm3
+	vpermps	%ymm1, %ymm3, %ymm1
+	vblendps	$254, %ymm2, %ymm0, %ymm0
+	vmovdqa	.LC33(%rip), %ymm2
+	vpermps	%ymm0, %ymm2, %ymm0
+	vmovdqa	.LC34(%rip), %ymm2
+	vpermps	%ymm1, %ymm2, %ymm1
+	vpermps	%ymm0, %ymm2, %ymm0
+	vmovups	%ymm1, (%rsi)
 	vmovups	%ymm0, 32(%rsi)
 	ret
 	.cfi_endproc
 .LFE6459:
 	.size	student_rotate_by_1_16xfloat, .-student_rotate_by_1_16xfloat
 	.section	.rodata.str1.1
-.LC36:
+.LC43:
 	.string	"test_rotate_by_1_16xfloat: "
 	.text
 	.globl	test_rotate_by_1_16xfloat
@@ -969,14 +951,17 @@ test_rotate_by_1_16xfloat:
 .LFB6460:
 	.cfi_startproc
 	endbr64
-	pushq	%rbp
+	pushq	%r12
 	.cfi_def_cfa_offset 16
-	.cfi_offset 6, -16
-	movq	%rsp, %rbp
-	.cfi_def_cfa_register 6
+	.cfi_offset 12, -16
+	pushq	%rbp
+	.cfi_def_cfa_offset 24
+	.cfi_offset 6, -24
 	pushq	%rbx
-	subq	$232, %rsp
-	.cfi_offset 3, -24
+	.cfi_def_cfa_offset 32
+	.cfi_offset 3, -32
+	subq	$224, %rsp
+	.cfi_def_cfa_offset 256
 	movq	%fs:40, %rax
 	movq	%rax, 216(%rsp)
 	xorl	%eax, %eax
@@ -1014,39 +999,41 @@ test_rotate_by_1_16xfloat:
 	vmovss	%xmm0, 136(%rsp)
 	vmovss	%xmm0, 140(%rsp)
 	leaq	80(%rsp), %rbx
-	leaq	16(%rsp), %rdi
+	leaq	16(%rsp), %r12
 	movq	%rbx, %rsi
+	movq	%r12, %rdi
 	call	reference_rotate_by_1_16xfloat
-	vbroadcastss	.LC16(%rip), %ymm0
-	vmovups	%ymm0, 144(%rsp)
-	vmovups	%ymm0, 176(%rsp)
-	leaq	144(%rsp), %rdx
+	leaq	144(%rsp), %rbp
+	movq	%rbp, %rsi
+	movq	%r12, %rdi
+	call	student_rotate_by_1_16xfloat
+	movq	%rbp, %rdx
 	movq	%rbx, %rsi
 	movl	$16, %edi
 	call	max_pair_wise_diff
 	vmovss	%xmm0, 12(%rsp)
-	leaq	.LC36(%rip), %rsi
+	leaq	.LC43(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
 	vcvtss2sd	12(%rsp), %xmm0, %xmm0
-	vcomisd	.LC18(%rip), %xmm0
+	vcomisd	.LC19(%rip), %xmm0
 	jbe	.L111
-	leaq	.LC19(%rip), %rsi
+	leaq	.LC20(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
-	leaq	16(%rsp), %rdx
-	movl	$16, %esi
-	leaq	.LC20(%rip), %rdi
-	call	print_float_mem
-	movq	%rbx, %rdx
+	movq	%r12, %rdx
 	movl	$16, %esi
 	leaq	.LC21(%rip), %rdi
 	call	print_float_mem
-	leaq	144(%rsp), %rdx
+	movq	%rbx, %rdx
 	movl	$16, %esi
 	leaq	.LC22(%rip), %rdi
+	call	print_float_mem
+	movq	%rbp, %rdx
+	movl	$16, %esi
+	leaq	.LC23(%rip), %rdi
 	call	print_float_mem
 	leaq	.LC7(%rip), %rsi
 	movl	$2, %edi
@@ -1056,14 +1043,19 @@ test_rotate_by_1_16xfloat:
 	movq	216(%rsp), %rax
 	subq	%fs:40, %rax
 	jne	.L113
-	movq	-8(%rbp), %rbx
-	leave
+	addq	$224, %rsp
 	.cfi_remember_state
-	.cfi_def_cfa 7, 8
+	.cfi_def_cfa_offset 32
+	popq	%rbx
+	.cfi_def_cfa_offset 24
+	popq	%rbp
+	.cfi_def_cfa_offset 16
+	popq	%r12
+	.cfi_def_cfa_offset 8
 	ret
 .L111:
 	.cfi_restore_state
-	leaq	.LC23(%rip), %rsi
+	leaq	.LC24(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
@@ -1075,7 +1067,7 @@ test_rotate_by_1_16xfloat:
 	.size	test_rotate_by_1_16xfloat, .-test_rotate_by_1_16xfloat
 	.section	.rodata.str1.8,"aMS",@progbits,1
 	.align 8
-.LC37:
+.LC44:
 	.string	"test_transpose_4x2_colmaj_8xfloat: "
 	.text
 	.globl	test_transpose_4x2_colmaj_8xfloat
@@ -1090,7 +1082,8 @@ test_transpose_4x2_colmaj_8xfloat:
 	movq	%rsp, %rbp
 	.cfi_def_cfa_register 6
 	pushq	%rbx
-	subq	$136, %rsp
+	andq	$-32, %rsp
+	addq	$-128, %rsp
 	.cfi_offset 3, -24
 	movq	%fs:40, %rax
 	movq	%rax, 120(%rsp)
@@ -1116,32 +1109,33 @@ test_transpose_4x2_colmaj_8xfloat:
 	leaq	16(%rsp), %rdi
 	movq	%rbx, %rsi
 	call	reference_transpose_4x2_colmaj_8xfloat
-	vbroadcastss	.LC16(%rip), %ymm0
+	vmovdqa	.LC31(%rip), %ymm0
+	vpermps	.LC17(%rip), %ymm0, %ymm0
 	vmovups	%ymm0, 80(%rsp)
 	leaq	80(%rsp), %rdx
 	movq	%rbx, %rsi
 	movl	$8, %edi
 	call	max_pair_wise_diff
 	vmovss	%xmm0, 12(%rsp)
-	leaq	.LC37(%rip), %rsi
+	leaq	.LC44(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
 	vcvtss2sd	12(%rsp), %xmm0, %xmm0
-	vcomisd	.LC18(%rip), %xmm0
+	vcomisd	.LC19(%rip), %xmm0
 	jbe	.L120
-	leaq	.LC19(%rip), %rsi
+	leaq	.LC20(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
 	leaq	16(%rsp), %rsi
-	leaq	.LC20(%rip), %rdi
-	call	print_8xfloat_mem
-	movq	%rbx, %rsi
 	leaq	.LC21(%rip), %rdi
 	call	print_8xfloat_mem
-	leaq	80(%rsp), %rsi
+	movq	%rbx, %rsi
 	leaq	.LC22(%rip), %rdi
+	call	print_8xfloat_mem
+	leaq	80(%rsp), %rsi
+	leaq	.LC23(%rip), %rdi
 	call	print_8xfloat_mem
 	leaq	.LC7(%rip), %rsi
 	movl	$2, %edi
@@ -1158,7 +1152,7 @@ test_transpose_4x2_colmaj_8xfloat:
 	ret
 .L120:
 	.cfi_restore_state
-	leaq	.LC23(%rip), %rsi
+	leaq	.LC24(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
@@ -1201,8 +1195,23 @@ student_transpose_4x4_colmaj_8xfloat:
 .LFB6463:
 	.cfi_startproc
 	endbr64
-	vbroadcastss	.LC16(%rip), %ymm0
-	vmovups	%ymm0, (%rsi)
+	vmovups	(%rdi), %ymm3
+	vmovups	32(%rdi), %ymm2
+	vmovaps	%xmm3, %xmm1
+	vextractf128	$0x1, %ymm3, %xmm3
+	vmovaps	%xmm2, %xmm0
+	vextractf128	$0x1, %ymm2, %xmm2
+	vunpcklps	%xmm3, %xmm1, %xmm5
+	vunpckhps	%xmm3, %xmm1, %xmm1
+	vunpcklps	%xmm2, %xmm0, %xmm3
+	vunpckhps	%xmm2, %xmm0, %xmm0
+	vmovlhps	%xmm3, %xmm5, %xmm4
+	vmovhlps	%xmm5, %xmm3, %xmm3
+	vmovlhps	%xmm0, %xmm1, %xmm2
+	vmovhlps	%xmm1, %xmm0, %xmm0
+	vinsertf128	$0x1, %xmm3, %ymm4, %ymm1
+	vinsertf128	$0x1, %xmm0, %ymm2, %ymm0
+	vmovups	%ymm1, (%rsi)
 	vmovups	%ymm0, 32(%rsi)
 	ret
 	.cfi_endproc
@@ -1210,7 +1219,7 @@ student_transpose_4x4_colmaj_8xfloat:
 	.size	student_transpose_4x4_colmaj_8xfloat, .-student_transpose_4x4_colmaj_8xfloat
 	.section	.rodata.str1.8
 	.align 8
-.LC38:
+.LC45:
 	.string	"test_transpose_4x4_colmaj_8xfloat: "
 	.text
 	.globl	test_transpose_4x4_colmaj_8xfloat
@@ -1219,14 +1228,17 @@ test_transpose_4x4_colmaj_8xfloat:
 .LFB6464:
 	.cfi_startproc
 	endbr64
-	pushq	%rbp
+	pushq	%r12
 	.cfi_def_cfa_offset 16
-	.cfi_offset 6, -16
-	movq	%rsp, %rbp
-	.cfi_def_cfa_register 6
+	.cfi_offset 12, -16
+	pushq	%rbp
+	.cfi_def_cfa_offset 24
+	.cfi_offset 6, -24
 	pushq	%rbx
-	subq	$232, %rsp
-	.cfi_offset 3, -24
+	.cfi_def_cfa_offset 32
+	.cfi_offset 3, -32
+	subq	$224, %rsp
+	.cfi_def_cfa_offset 256
 	movq	%fs:40, %rax
 	movq	%rax, 216(%rsp)
 	xorl	%eax, %eax
@@ -1264,39 +1276,41 @@ test_transpose_4x4_colmaj_8xfloat:
 	vmovss	%xmm0, 136(%rsp)
 	vmovss	%xmm0, 140(%rsp)
 	leaq	80(%rsp), %rbx
-	leaq	16(%rsp), %rdi
+	leaq	16(%rsp), %r12
 	movq	%rbx, %rsi
+	movq	%r12, %rdi
 	call	reference_transpose_4x4_colmaj_16xfloat
-	vbroadcastss	.LC16(%rip), %ymm0
-	vmovups	%ymm0, 144(%rsp)
-	vmovups	%ymm0, 176(%rsp)
-	leaq	144(%rsp), %rdx
+	leaq	144(%rsp), %rbp
+	movq	%rbp, %rsi
+	movq	%r12, %rdi
+	call	student_transpose_4x4_colmaj_8xfloat
+	movq	%rbp, %rdx
 	movq	%rbx, %rsi
 	movl	$16, %edi
 	call	max_pair_wise_diff
 	vmovss	%xmm0, 12(%rsp)
-	leaq	.LC38(%rip), %rsi
+	leaq	.LC45(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
 	vcvtss2sd	12(%rsp), %xmm0, %xmm0
-	vcomisd	.LC18(%rip), %xmm0
+	vcomisd	.LC19(%rip), %xmm0
 	jbe	.L135
-	leaq	.LC19(%rip), %rsi
+	leaq	.LC20(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
-	leaq	16(%rsp), %rdx
-	movl	$16, %esi
-	leaq	.LC20(%rip), %rdi
-	call	print_float_mem
-	movq	%rbx, %rdx
+	movq	%r12, %rdx
 	movl	$16, %esi
 	leaq	.LC21(%rip), %rdi
 	call	print_float_mem
-	leaq	144(%rsp), %rdx
+	movq	%rbx, %rdx
 	movl	$16, %esi
 	leaq	.LC22(%rip), %rdi
+	call	print_float_mem
+	movq	%rbp, %rdx
+	movl	$16, %esi
+	leaq	.LC23(%rip), %rdi
 	call	print_float_mem
 	leaq	.LC7(%rip), %rsi
 	movl	$2, %edi
@@ -1306,14 +1320,19 @@ test_transpose_4x4_colmaj_8xfloat:
 	movq	216(%rsp), %rax
 	subq	%fs:40, %rax
 	jne	.L137
-	movq	-8(%rbp), %rbx
-	leave
+	addq	$224, %rsp
 	.cfi_remember_state
-	.cfi_def_cfa 7, 8
+	.cfi_def_cfa_offset 32
+	popq	%rbx
+	.cfi_def_cfa_offset 24
+	popq	%rbp
+	.cfi_def_cfa_offset 16
+	popq	%r12
+	.cfi_def_cfa_offset 8
 	ret
 .L135:
 	.cfi_restore_state
-	leaq	.LC23(%rip), %rsi
+	leaq	.LC24(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
@@ -1360,10 +1379,26 @@ student_transpose_8x4_colmaj_8xfloat:
 .LFB6466:
 	.cfi_startproc
 	endbr64
-	vbroadcastss	.LC16(%rip), %ymm0
-	vmovups	%ymm0, (%rsi)
-	vmovups	%ymm0, 32(%rsi)
-	vmovups	%ymm0, 64(%rsi)
+	vmovups	(%rdi), %ymm0
+	vmovups	32(%rdi), %ymm4
+	vmovups	64(%rdi), %ymm2
+	vmovups	96(%rdi), %ymm3
+	vunpcklps	%ymm4, %ymm0, %ymm1
+	vunpcklps	%ymm3, %ymm2, %ymm5
+	vunpckhps	%ymm4, %ymm0, %ymm0
+	vunpckhps	%ymm3, %ymm2, %ymm2
+	vinsertf128	$1, %xmm5, %ymm1, %ymm4
+	vinsertf128	$1, %xmm2, %ymm0, %ymm3
+	vperm2f128	$49, %ymm5, %ymm1, %ymm1
+	vperm2f128	$49, %ymm2, %ymm0, %ymm0
+	vmovdqa	.LC46(%rip), %ymm2
+	vpermps	%ymm4, %ymm2, %ymm4
+	vpermps	%ymm3, %ymm2, %ymm3
+	vpermps	%ymm1, %ymm2, %ymm1
+	vpermps	%ymm0, %ymm2, %ymm0
+	vmovups	%ymm4, (%rsi)
+	vmovups	%ymm3, 32(%rsi)
+	vmovups	%ymm1, 64(%rsi)
 	vmovups	%ymm0, 96(%rsi)
 	ret
 	.cfi_endproc
@@ -1371,7 +1406,7 @@ student_transpose_8x4_colmaj_8xfloat:
 	.size	student_transpose_8x4_colmaj_8xfloat, .-student_transpose_8x4_colmaj_8xfloat
 	.section	.rodata.str1.8
 	.align 8
-.LC55:
+.LC63:
 	.string	"test_transpose_8x4_colmaj_8xfloat: "
 	.text
 	.globl	test_transpose_8x4_colmaj_8xfloat
@@ -1380,14 +1415,17 @@ test_transpose_8x4_colmaj_8xfloat:
 .LFB6467:
 	.cfi_startproc
 	endbr64
-	pushq	%rbp
+	pushq	%r12
 	.cfi_def_cfa_offset 16
-	.cfi_offset 6, -16
-	movq	%rsp, %rbp
-	.cfi_def_cfa_register 6
+	.cfi_offset 12, -16
+	pushq	%rbp
+	.cfi_def_cfa_offset 24
+	.cfi_offset 6, -24
 	pushq	%rbx
-	subq	$424, %rsp
-	.cfi_offset 3, -24
+	.cfi_def_cfa_offset 32
+	.cfi_offset 3, -32
+	subq	$416, %rsp
+	.cfi_def_cfa_offset 448
 	movq	%fs:40, %rax
 	movq	%rax, 408(%rsp)
 	xorl	%eax, %eax
@@ -1457,44 +1495,44 @@ test_transpose_8x4_colmaj_8xfloat:
 	vmovss	%xmm0, 264(%rsp)
 	vmovss	%xmm0, 268(%rsp)
 	leaq	144(%rsp), %rbx
-	leaq	16(%rsp), %rdi
+	leaq	16(%rsp), %r12
 	movq	%rbx, %rsi
+	movq	%r12, %rdi
 	call	reference_transpose_8x4_colmaj_32xfloat
-	vbroadcastss	.LC16(%rip), %ymm0
-	vmovups	%ymm0, 272(%rsp)
-	vmovups	%ymm0, 304(%rsp)
-	vmovups	%ymm0, 336(%rsp)
-	vmovups	%ymm0, 368(%rsp)
-	leaq	272(%rsp), %rdx
+	leaq	272(%rsp), %rbp
+	movq	%rbp, %rsi
+	movq	%r12, %rdi
+	call	student_transpose_8x4_colmaj_8xfloat
+	movq	%rbp, %rdx
 	movq	%rbx, %rsi
 	movl	$32, %edi
 	call	max_pair_wise_diff
 	vmovss	%xmm0, 12(%rsp)
-	leaq	.LC55(%rip), %rsi
+	leaq	.LC63(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
 	vcvtss2sd	12(%rsp), %xmm0, %xmm0
-	vcomisd	.LC18(%rip), %xmm0
+	vcomisd	.LC19(%rip), %xmm0
 	jbe	.L151
-	leaq	.LC19(%rip), %rsi
+	leaq	.LC20(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
-	leaq	16(%rsp), %rcx
-	movl	$8, %edx
-	movl	$32, %esi
-	leaq	.LC20(%rip), %rdi
-	call	print_float_mem_as_vects
-	movq	%rbx, %rcx
+	movq	%r12, %rcx
 	movl	$8, %edx
 	movl	$32, %esi
 	leaq	.LC21(%rip), %rdi
 	call	print_float_mem_as_vects
-	leaq	272(%rsp), %rcx
+	movq	%rbx, %rcx
 	movl	$8, %edx
 	movl	$32, %esi
 	leaq	.LC22(%rip), %rdi
+	call	print_float_mem_as_vects
+	movq	%rbp, %rcx
+	movl	$8, %edx
+	movl	$32, %esi
+	leaq	.LC23(%rip), %rdi
 	call	print_float_mem_as_vects
 	leaq	.LC7(%rip), %rsi
 	movl	$2, %edi
@@ -1504,14 +1542,19 @@ test_transpose_8x4_colmaj_8xfloat:
 	movq	408(%rsp), %rax
 	subq	%fs:40, %rax
 	jne	.L153
-	movq	-8(%rbp), %rbx
-	leave
+	addq	$416, %rsp
 	.cfi_remember_state
-	.cfi_def_cfa 7, 8
+	.cfi_def_cfa_offset 32
+	popq	%rbx
+	.cfi_def_cfa_offset 24
+	popq	%rbp
+	.cfi_def_cfa_offset 16
+	popq	%r12
+	.cfi_def_cfa_offset 8
 	ret
 .L151:
 	.cfi_restore_state
-	leaq	.LC23(%rip), %rsi
+	leaq	.LC24(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
@@ -1546,15 +1589,18 @@ student_gather_at_stride_8xfloat:
 .LFB6469:
 	.cfi_startproc
 	endbr64
-	vbroadcastss	.LC16(%rip), %ymm0
-	vmovups	%ymm0, (%rsi)
+	vxorps	%xmm0, %xmm0, %xmm0
+	vcmpps	$0, %ymm0, %ymm0, %ymm0
+	vmovdqa	.LC64(%rip), %ymm2
+	vgatherdps	%ymm0, (%rdi,%ymm2,4), %ymm1
+	vmovups	%ymm1, (%rsi)
 	ret
 	.cfi_endproc
 .LFE6469:
 	.size	student_gather_at_stride_8xfloat, .-student_gather_at_stride_8xfloat
 	.section	.rodata.str1.8
 	.align 8
-.LC56:
+.LC65:
 	.string	"test_gather_at_stride_8xfloat: "
 	.text
 	.globl	test_gather_at_stride_8xfloat
@@ -1568,9 +1614,12 @@ test_gather_at_stride_8xfloat:
 	.cfi_offset 6, -16
 	movq	%rsp, %rbp
 	.cfi_def_cfa_register 6
+	pushq	%r12
 	pushq	%rbx
-	subq	$232, %rsp
-	.cfi_offset 3, -24
+	andq	$-32, %rsp
+	subq	$224, %rsp
+	.cfi_offset 12, -24
+	.cfi_offset 3, -32
 	movq	%fs:40, %rax
 	movq	%rax, 216(%rsp)
 	xorl	%eax, %eax
@@ -1616,41 +1665,45 @@ test_gather_at_stride_8xfloat:
 	vmovss	%xmm0, 40(%rsp)
 	vmovss	%xmm0, 44(%rsp)
 	leaq	16(%rsp), %rbx
-	leaq	80(%rsp), %rdi
+	leaq	80(%rsp), %r12
 	movq	%rbx, %rsi
+	movq	%r12, %rdi
 	call	reference_gather_at_stride_8xfloat
-	vbroadcastss	.LC16(%rip), %ymm0
-	vmovups	%ymm0, 48(%rsp)
+	vxorps	%xmm0, %xmm0, %xmm0
+	vcmpps	$0, %ymm0, %ymm0, %ymm0
+	vmovdqa	.LC64(%rip), %ymm2
+	vgatherdps	%ymm0, (%r12,%ymm2,4), %ymm1
+	vmovups	%ymm1, 48(%rsp)
 	leaq	48(%rsp), %rdx
 	movq	%rbx, %rsi
 	movl	$8, %edi
 	call	max_pair_wise_diff
 	vmovss	%xmm0, 12(%rsp)
-	leaq	.LC56(%rip), %rsi
+	leaq	.LC65(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
 	vcvtss2sd	12(%rsp), %xmm0, %xmm0
-	vcomisd	.LC18(%rip), %xmm0
+	vcomisd	.LC19(%rip), %xmm0
 	jbe	.L164
-	leaq	.LC19(%rip), %rsi
+	leaq	.LC20(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
-	leaq	80(%rsp), %rcx
+	movq	%r12, %rcx
 	movl	$8, %edx
 	movl	$32, %esi
-	leaq	.LC20(%rip), %rdi
+	leaq	.LC21(%rip), %rdi
 	call	print_float_mem_as_vects
 	movq	%rbx, %rcx
 	movl	$8, %edx
 	movl	$8, %esi
-	leaq	.LC21(%rip), %rdi
+	leaq	.LC22(%rip), %rdi
 	call	print_float_mem_as_vects
 	leaq	48(%rsp), %rcx
 	movl	$8, %edx
 	movl	$8, %esi
-	leaq	.LC22(%rip), %rdi
+	leaq	.LC23(%rip), %rdi
 	call	print_float_mem_as_vects
 	leaq	.LC7(%rip), %rsi
 	movl	$2, %edi
@@ -1660,14 +1713,16 @@ test_gather_at_stride_8xfloat:
 	movq	216(%rsp), %rax
 	subq	%fs:40, %rax
 	jne	.L166
-	movq	-8(%rbp), %rbx
-	leave
+	leaq	-16(%rbp), %rsp
+	popq	%rbx
+	popq	%r12
+	popq	%rbp
 	.cfi_remember_state
 	.cfi_def_cfa 7, 8
 	ret
 .L164:
 	.cfi_restore_state
-	leaq	.LC23(%rip), %rsi
+	leaq	.LC24(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
@@ -1702,10 +1757,23 @@ student_scatter_at_stride_8xfloat:
 .LFB6472:
 	.cfi_startproc
 	endbr64
+	vmovups	(%rdi), %ymm0
+	vmovdqa	.LC66(%rip), %ymm4
+	vpermps	%ymm0, %ymm4, %ymm4
+	vmovdqa	.LC67(%rip), %ymm3
+	vpermps	%ymm0, %ymm3, %ymm3
+	vmovdqa	.LC68(%rip), %ymm2
+	vpermps	%ymm0, %ymm2, %ymm2
+	vmovdqa	.LC69(%rip), %ymm1
+	vpermps	%ymm0, %ymm1, %ymm1
 	vbroadcastss	.LC16(%rip), %ymm0
-	vmovups	%ymm0, (%rsi)
-	vmovups	%ymm0, 32(%rsi)
-	vmovups	%ymm0, 64(%rsi)
+	vblendps	$17, %ymm4, %ymm0, %ymm4
+	vblendps	$17, %ymm3, %ymm0, %ymm3
+	vblendps	$17, %ymm2, %ymm0, %ymm2
+	vblendps	$17, %ymm1, %ymm0, %ymm0
+	vmovups	%ymm4, (%rsi)
+	vmovups	%ymm3, 32(%rsi)
+	vmovups	%ymm2, 64(%rsi)
 	vmovups	%ymm0, 96(%rsi)
 	ret
 	.cfi_endproc
@@ -1713,7 +1781,7 @@ student_scatter_at_stride_8xfloat:
 	.size	student_scatter_at_stride_8xfloat, .-student_scatter_at_stride_8xfloat
 	.section	.rodata.str1.8
 	.align 8
-.LC57:
+.LC71:
 	.string	"test_scatter_at_stride_8xfloat: "
 	.text
 	.globl	test_scatter_at_stride_8xfloat
@@ -1722,14 +1790,17 @@ test_scatter_at_stride_8xfloat:
 .LFB6473:
 	.cfi_startproc
 	endbr64
-	pushq	%rbp
+	pushq	%r12
 	.cfi_def_cfa_offset 16
-	.cfi_offset 6, -16
-	movq	%rsp, %rbp
-	.cfi_def_cfa_register 6
+	.cfi_offset 12, -16
+	pushq	%rbp
+	.cfi_def_cfa_offset 24
+	.cfi_offset 6, -24
 	pushq	%rbx
-	subq	$328, %rsp
-	.cfi_offset 3, -24
+	.cfi_def_cfa_offset 32
+	.cfi_offset 3, -32
+	subq	$320, %rsp
+	.cfi_def_cfa_offset 352
 	movq	%fs:40, %rax
 	movq	%rax, 312(%rsp)
 	xorl	%eax, %eax
@@ -1775,44 +1846,44 @@ test_scatter_at_stride_8xfloat:
 	vmovss	%xmm0, 168(%rsp)
 	vmovss	%xmm0, 172(%rsp)
 	leaq	48(%rsp), %rbx
-	leaq	16(%rsp), %rdi
+	leaq	16(%rsp), %r12
 	movq	%rbx, %rsi
+	movq	%r12, %rdi
 	call	reference_scatter_at_stride_8xfloat
-	vbroadcastss	.LC16(%rip), %ymm0
-	vmovups	%ymm0, 176(%rsp)
-	vmovups	%ymm0, 208(%rsp)
-	vmovups	%ymm0, 240(%rsp)
-	vmovups	%ymm0, 272(%rsp)
-	leaq	176(%rsp), %rdx
+	leaq	176(%rsp), %rbp
+	movq	%rbp, %rsi
+	movq	%r12, %rdi
+	call	student_scatter_at_stride_8xfloat
+	movq	%rbp, %rdx
 	movq	%rbx, %rsi
 	movl	$32, %edi
 	call	max_pair_wise_diff
 	vmovss	%xmm0, 12(%rsp)
-	leaq	.LC57(%rip), %rsi
+	leaq	.LC71(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
 	vcvtss2sd	12(%rsp), %xmm0, %xmm0
-	vcomisd	.LC18(%rip), %xmm0
+	vcomisd	.LC19(%rip), %xmm0
 	jbe	.L177
-	leaq	.LC19(%rip), %rsi
+	leaq	.LC20(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
-	leaq	16(%rsp), %rcx
+	movq	%r12, %rcx
 	movl	$8, %edx
 	movl	$8, %esi
-	leaq	.LC20(%rip), %rdi
+	leaq	.LC21(%rip), %rdi
 	call	print_float_mem_as_vects
 	movq	%rbx, %rcx
 	movl	$8, %edx
 	movl	$32, %esi
-	leaq	.LC21(%rip), %rdi
+	leaq	.LC22(%rip), %rdi
 	call	print_float_mem_as_vects
-	leaq	176(%rsp), %rcx
+	movq	%rbp, %rcx
 	movl	$8, %edx
 	movl	$32, %esi
-	leaq	.LC22(%rip), %rdi
+	leaq	.LC23(%rip), %rdi
 	call	print_float_mem_as_vects
 	leaq	.LC7(%rip), %rsi
 	movl	$2, %edi
@@ -1822,14 +1893,19 @@ test_scatter_at_stride_8xfloat:
 	movq	312(%rsp), %rax
 	subq	%fs:40, %rax
 	jne	.L179
-	movq	-8(%rbp), %rbx
-	leave
+	addq	$320, %rsp
 	.cfi_remember_state
-	.cfi_def_cfa 7, 8
+	.cfi_def_cfa_offset 32
+	popq	%rbx
+	.cfi_def_cfa_offset 24
+	popq	%rbp
+	.cfi_def_cfa_offset 16
+	popq	%r12
+	.cfi_def_cfa_offset 8
 	ret
 .L177:
 	.cfi_restore_state
-	leaq	.LC23(%rip), %rsi
+	leaq	.LC24(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
@@ -1874,7 +1950,45 @@ student_matvec_8x8_colmaj_8xfloat:
 .LFB6475:
 	.cfi_startproc
 	endbr64
-	vxorps	%xmm0, %xmm0, %xmm0
+	vmovups	(%rdi), %ymm7
+	vmovups	32(%rdi), %ymm6
+	vmovups	64(%rdi), %ymm5
+	vmovups	96(%rdi), %ymm4
+	vmovups	128(%rdi), %ymm3
+	vmovups	160(%rdi), %ymm2
+	vmovups	192(%rdi), %ymm1
+	vmovups	224(%rdi), %ymm0
+#APP
+# 1173 "simd.c" 1
+	
+	 movl    $111,%ebx #IACA/OSACA START MARKER
+	 .byte   100,103,144     #IACA/OSACA START MARKER
+# 0 "" 2
+#NO_APP
+	vbroadcastss	(%rsi), %ymm9
+	vxorps	%xmm8, %xmm8, %xmm8
+	vfmadd132ps	%ymm9, %ymm8, %ymm7
+	vbroadcastss	4(%rsi), %ymm8
+	vfmadd132ps	%ymm8, %ymm7, %ymm6
+	vbroadcastss	8(%rsi), %ymm7
+	vfmadd132ps	%ymm7, %ymm6, %ymm5
+	vbroadcastss	12(%rsi), %ymm6
+	vfmadd132ps	%ymm6, %ymm5, %ymm4
+	vbroadcastss	16(%rsi), %ymm5
+	vfmadd132ps	%ymm5, %ymm4, %ymm3
+	vbroadcastss	20(%rsi), %ymm4
+	vfmadd132ps	%ymm4, %ymm3, %ymm2
+	vbroadcastss	24(%rsi), %ymm3
+	vfmadd132ps	%ymm3, %ymm2, %ymm1
+	vbroadcastss	28(%rsi), %ymm2
+	vfmadd132ps	%ymm2, %ymm1, %ymm0
+#APP
+# 1211 "simd.c" 1
+	
+	 movl    $222,%ebx #IACA/OSACA START MARKER
+	 .byte   100,103,144     #IACA/OSACA START MARKER
+# 0 "" 2
+#NO_APP
 	vmovups	%ymm0, (%rdx)
 	ret
 	.cfi_endproc
@@ -1882,14 +1996,14 @@ student_matvec_8x8_colmaj_8xfloat:
 	.size	student_matvec_8x8_colmaj_8xfloat, .-student_matvec_8x8_colmaj_8xfloat
 	.section	.rodata.str1.8
 	.align 8
-.LC58:
+.LC72:
 	.string	"test_matvec_8x8_colmaj_8xfloat: "
 	.section	.rodata.str1.1
-.LC59:
+.LC73:
 	.string	" x"
-.LC60:
+.LC74:
 	.string	"yt"
-.LC61:
+.LC75:
 	.string	"yr"
 	.text
 	.globl	test_matvec_8x8_colmaj_8xfloat
@@ -1903,9 +2017,15 @@ test_matvec_8x8_colmaj_8xfloat:
 	.cfi_offset 6, -16
 	movq	%rsp, %rbp
 	.cfi_def_cfa_register 6
+	pushq	%r14
+	pushq	%r13
+	pushq	%r12
 	pushq	%rbx
-	subq	$392, %rsp
-	.cfi_offset 3, -24
+	subq	$384, %rsp
+	.cfi_offset 14, -24
+	.cfi_offset 13, -32
+	.cfi_offset 12, -40
+	.cfi_offset 3, -48
 	vxorps	%xmm1, %xmm1, %xmm1
 	movq	%fs:40, %rax
 	movq	%rax, 376(%rsp)
@@ -1920,7 +2040,6 @@ test_matvec_8x8_colmaj_8xfloat:
 	movl	$0x3f800000, 44(%rsp)
 	vpxor	%xmm0, %xmm0, %xmm0
 	vmovdqu	%ymm0, 48(%rsp)
-	vmovdqu	%ymm0, 80(%rsp)
 	leaq	112(%rsp), %rsi
 	movl	$65, %ecx
 .L187:
@@ -1938,45 +2057,52 @@ test_matvec_8x8_colmaj_8xfloat:
 	cmpl	$73, %ecx
 	jne	.L187
 	leaq	48(%rsp), %rbx
-	leaq	16(%rsp), %rsi
-	leaq	112(%rsp), %rdi
+	leaq	16(%rsp), %r14
+	leaq	112(%rsp), %r13
 	movq	%rbx, %rdx
+	movq	%r14, %rsi
+	movq	%r13, %rdi
 	call	reference_matvec_8x8_colmaj_64xfloat
-	leaq	80(%rsp), %rdx
+	leaq	80(%rsp), %r12
+	movq	%r12, %rdx
+	movq	%r14, %rsi
+	movq	%r13, %rdi
+	call	student_matvec_8x8_colmaj_8xfloat
+	movq	%r12, %rdx
 	movq	%rbx, %rsi
 	movl	$8, %edi
 	call	max_pair_wise_diff
 	vmovss	%xmm0, 12(%rsp)
-	leaq	.LC58(%rip), %rsi
+	leaq	.LC72(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
 	vcvtss2sd	12(%rsp), %xmm0, %xmm0
-	vcomisd	.LC18(%rip), %xmm0
+	vcomisd	.LC19(%rip), %xmm0
 	jbe	.L196
-	leaq	.LC19(%rip), %rsi
+	leaq	.LC20(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
-	leaq	112(%rsp), %rcx
+	movq	%r13, %rcx
 	movl	$8, %edx
 	movl	$64, %esi
-	leaq	.LC20(%rip), %rdi
+	leaq	.LC21(%rip), %rdi
 	call	print_float_mem_as_vects
-	leaq	16(%rsp), %rcx
+	movq	%r14, %rcx
 	movl	$8, %edx
 	movl	$8, %esi
-	leaq	.LC59(%rip), %rdi
+	leaq	.LC73(%rip), %rdi
 	call	print_float_mem_as_vects
 	movq	%rbx, %rcx
 	movl	$8, %edx
 	movl	$8, %esi
-	leaq	.LC60(%rip), %rdi
+	leaq	.LC74(%rip), %rdi
 	call	print_float_mem_as_vects
-	leaq	80(%rsp), %rcx
+	movq	%r12, %rcx
 	movl	$8, %edx
 	movl	$8, %esi
-	leaq	.LC61(%rip), %rdi
+	leaq	.LC75(%rip), %rdi
 	call	print_float_mem_as_vects
 	leaq	.LC7(%rip), %rsi
 	movl	$2, %edi
@@ -1986,14 +2112,18 @@ test_matvec_8x8_colmaj_8xfloat:
 	movq	376(%rsp), %rax
 	subq	%fs:40, %rax
 	jne	.L198
-	movq	-8(%rbp), %rbx
-	leave
+	addq	$384, %rsp
+	popq	%rbx
+	popq	%r12
+	popq	%r13
+	popq	%r14
+	popq	%rbp
 	.cfi_remember_state
 	.cfi_def_cfa 7, 8
 	ret
 .L196:
 	.cfi_restore_state
-	leaq	.LC23(%rip), %rsi
+	leaq	.LC24(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
@@ -2004,27 +2134,27 @@ test_matvec_8x8_colmaj_8xfloat:
 .LFE6476:
 	.size	test_matvec_8x8_colmaj_8xfloat, .-test_matvec_8x8_colmaj_8xfloat
 	.section	.rodata.str1.1
-.LC63:
+.LC77:
 	.string	"01: "
-.LC64:
+.LC78:
 	.string	"02: "
-.LC65:
+.LC79:
 	.string	"03: "
-.LC66:
+.LC80:
 	.string	"04: "
-.LC67:
+.LC81:
 	.string	"05: "
-.LC68:
+.LC82:
 	.string	"06: "
-.LC69:
+.LC83:
 	.string	"07: "
-.LC70:
+.LC84:
 	.string	"08: "
-.LC71:
+.LC85:
 	.string	"09: "
-.LC72:
+.LC86:
 	.string	"10: "
-.LC73:
+.LC87:
 	.string	"11: "
 	.text
 	.globl	main
@@ -2035,67 +2165,67 @@ main:
 	endbr64
 	subq	$8, %rsp
 	.cfi_def_cfa_offset 16
-	leaq	.LC63(%rip), %rsi
+	leaq	.LC77(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
 	movl	$0, %eax
 	call	test_reverse_8xfloat
-	leaq	.LC64(%rip), %rsi
+	leaq	.LC78(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
 	movl	$0, %eax
 	call	test_rotate_by_4_8xfloat
-	leaq	.LC65(%rip), %rsi
+	leaq	.LC79(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
 	movl	$0, %eax
 	call	test_rotate_by_2_8xfloat
-	leaq	.LC66(%rip), %rsi
+	leaq	.LC80(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
 	movl	$0, %eax
 	call	test_rotate_by_1_8xfloat
-	leaq	.LC67(%rip), %rsi
+	leaq	.LC81(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
 	movl	$0, %eax
 	call	test_transpose_4x2_colmaj_8xfloat
-	leaq	.LC68(%rip), %rsi
+	leaq	.LC82(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
 	movl	$0, %eax
 	call	test_rotate_by_1_16xfloat
-	leaq	.LC69(%rip), %rsi
+	leaq	.LC83(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
 	movl	$0, %eax
 	call	test_transpose_4x4_colmaj_8xfloat
-	leaq	.LC70(%rip), %rsi
+	leaq	.LC84(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
 	movl	$0, %eax
 	call	test_transpose_8x4_colmaj_8xfloat
-	leaq	.LC71(%rip), %rsi
+	leaq	.LC85(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
 	movl	$0, %eax
 	call	test_gather_at_stride_8xfloat
-	leaq	.LC72(%rip), %rsi
+	leaq	.LC86(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
 	movl	$0, %eax
 	call	test_scatter_at_stride_8xfloat
-	leaq	.LC73(%rip), %rsi
+	leaq	.LC87(%rip), %rsi
 	movl	$2, %edi
 	movl	$0, %eax
 	call	__printf_chk@PLT
@@ -2130,11 +2260,153 @@ main:
 	.align 4
 .LC16:
 	.long	-1082130432
+	.section	.rodata.cst32
+	.align 32
+.LC17:
+	.long	0
+	.long	1065353216
+	.long	1073741824
+	.long	1077936128
+	.long	1082130432
+	.long	1084227584
+	.long	1086324736
+	.long	1088421888
 	.section	.rodata.cst8,"aM",@progbits,8
 	.align 8
-.LC18:
+.LC19:
 	.long	-1598689907
 	.long	1051772663
+	.section	.rodata.cst32
+	.align 32
+.LC25:
+	.long	4
+	.long	5
+	.long	6
+	.long	7
+	.long	0
+	.long	1
+	.long	2
+	.long	3
+	.align 32
+.LC27:
+	.long	2
+	.long	3
+	.long	4
+	.long	5
+	.long	6
+	.long	7
+	.long	0
+	.long	1
+	.align 32
+.LC29:
+	.long	1
+	.long	2
+	.long	3
+	.long	4
+	.long	5
+	.long	6
+	.long	7
+	.long	0
+	.align 32
+.LC31:
+	.long	0
+	.long	4
+	.long	1
+	.long	5
+	.long	2
+	.long	6
+	.long	3
+	.long	7
+	.align 32
+.LC32:
+	.long	1
+	.long	2
+	.long	3
+	.long	4
+	.long	5
+	.long	6
+	.long	7
+	.long	8
+	.align 32
+.LC33:
+	.long	9
+	.long	10
+	.long	11
+	.long	12
+	.long	13
+	.long	14
+	.long	15
+	.long	0
+	.align 32
+.LC34:
+	.long	0
+	.long	1
+	.long	2
+	.long	3
+	.long	4
+	.long	5
+	.long	6
+	.long	7
+	.align 32
+.LC46:
+	.long	0
+	.long	1
+	.long	4
+	.long	5
+	.long	2
+	.long	3
+	.long	6
+	.long	7
+	.align 32
+.LC64:
+	.long	0
+	.long	4
+	.long	8
+	.long	12
+	.long	16
+	.long	20
+	.long	24
+	.long	28
+	.align 32
+.LC66:
+	.long	0
+	.long	0
+	.long	0
+	.long	0
+	.long	1
+	.long	0
+	.long	0
+	.long	0
+	.align 32
+.LC67:
+	.long	2
+	.long	0
+	.long	0
+	.long	0
+	.long	3
+	.long	0
+	.long	0
+	.long	0
+	.align 32
+.LC68:
+	.long	4
+	.long	0
+	.long	0
+	.long	0
+	.long	5
+	.long	0
+	.long	0
+	.long	0
+	.align 32
+.LC69:
+	.long	6
+	.long	0
+	.long	0
+	.long	0
+	.long	7
+	.long	0
+	.long	0
+	.long	0
 	.ident	"GCC: (Ubuntu 13.3.0-6ubuntu2~24.04) 13.3.0"
 	.section	.note.GNU-stack,"",@progbits
 	.section	.note.gnu.property,"a"

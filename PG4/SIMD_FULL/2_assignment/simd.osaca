@@ -1,7 +1,7 @@
 Open Source Architecture Code Analyzer (OSACA) - 0.7.1
 Analyzed file:      simd.s
 Architecture:       SPR
-Timestamp:          2025-10-07 15:45:58
+Timestamp:          2025-10-08 19:21:48
 
 -------------------------- WARNING: No micro-architecture was specified -------------------------
          A default uarch for this particular ISA was used. Specify the uarch with --arch.
@@ -15,21 +15,38 @@ Timestamp:          2025-10-07 15:45:58
 
 Combined Analysis Report
 ------------------------
-                                                Port pressure in cycles                                                 
+                                                 Port pressure in cycles                                                 
      |  0   - 0DV  |  1   - 1DV  |  2   |  3   |  4   |  5   |  6   |  7   |  8   |  9   |  10  |  11  ||  CP  | LCD  |
 -----------------------------------------------------------------------------------------------------------------------
- 338 |             |             |      |      |      |      |      |      |      |      |      |      ||      |      |   # 0 "" 2
- 339 |             |             |      |      |      |      |      |      |      |      |      |      ||      |      |   #NO_APP
- 340 |             |             | 0.33 | 0.33 |      |      |      |      |      |      |      | 0.33 ||  5.0 |      |   vmovss (%rax), %xmm0
- 341 |             |             |      |      | 0.50 |      |      | 0.50 | 0.50 | 0.50 |      |      ||  0.0 |      |   vmovss %xmm0, (%rsi)
- 342 |             |             |      |      |      |      |      |      |      |      |      |      ||      |      |   #APP
- 343 |             |             |      |      |      |      |      |      |      |      |      |      ||      |      |   # 173 "simd.c" 1
+1966 |             |             |      |      |      |      |      |      |      |      |      |      ||      |      |   # 0 "" 2
+1967 |             |             |      |      |      |      |      |      |      |      |      |      ||      |      |   #NO_APP
+1968 |             |             | 0.33 | 0.33 |      |      |      |      |      |      |      | 0.33 ||  5.0 |      |   vbroadcastss (%rsi), %ymm9
+1969 | 0.00        | 0.00        |      |      |      | 0.33 | 0.34 |      |      |      | 0.33 |      ||      |      |   vxorps %xmm8, %xmm8, %xmm8
+1970 | 0.50        | 0.50        |      |      |      |      |      |      |      |      |      |      ||  4.0 |      |   vfmadd132ps %ymm9, %ymm8, %ymm7
+1971 |             |             | 0.33 | 0.33 |      |      |      |      |      |      |      | 0.33 ||      |      |   vbroadcastss 4(%rsi), %ymm8
+1972 | 0.50        | 0.50        |      |      |      |      |      |      |      |      |      |      ||  4.0 |      |   vfmadd132ps %ymm8, %ymm7, %ymm6
+1973 |             |             | 0.33 | 0.33 |      |      |      |      |      |      |      | 0.33 ||      |      |   vbroadcastss 8(%rsi), %ymm7
+1974 | 0.50        | 0.50        |      |      |      |      |      |      |      |      |      |      ||  4.0 |      |   vfmadd132ps %ymm7, %ymm6, %ymm5
+1975 |             |             | 0.33 | 0.33 |      |      |      |      |      |      |      | 0.33 ||      |      |   vbroadcastss 12(%rsi), %ymm6
+1976 | 0.50        | 0.50        |      |      |      |      |      |      |      |      |      |      ||  4.0 |      |   vfmadd132ps %ymm6, %ymm5, %ymm4
+1977 |             |             | 0.33 | 0.33 |      |      |      |      |      |      |      | 0.33 ||      |      |   vbroadcastss 16(%rsi), %ymm5
+1978 | 0.50        | 0.50        |      |      |      |      |      |      |      |      |      |      ||  4.0 |      |   vfmadd132ps %ymm5, %ymm4, %ymm3
+1979 |             |             | 0.33 | 0.33 |      |      |      |      |      |      |      | 0.33 ||      |      |   vbroadcastss 20(%rsi), %ymm4
+1980 | 0.50        | 0.50        |      |      |      |      |      |      |      |      |      |      ||  4.0 |      |   vfmadd132ps %ymm4, %ymm3, %ymm2
+1981 |             |             | 0.33 | 0.33 |      |      |      |      |      |      |      | 0.33 ||      |      |   vbroadcastss 24(%rsi), %ymm3
+1982 | 0.50        | 0.50        |      |      |      |      |      |      |      |      |      |      ||  4.0 |      |   vfmadd132ps %ymm3, %ymm2, %ymm1
+1983 |             |             | 0.33 | 0.33 |      |      |      |      |      |      |      | 0.33 ||      |      |   vbroadcastss 28(%rsi), %ymm2
+1984 | 0.50        | 0.50        |      |      |      |      |      |      |      |      |      |      ||  4.0 |  4.0 |   vfmadd132ps %ymm2, %ymm1, %ymm0
+1985 |             |             |      |      |      |      |      |      |      |      |      |      ||      |      |   #APP
+1986 |             |             |      |      |      |      |      |      |      |      |      |      ||      |      |   # 1211 "simd.c" 1
 
-                                   0.33   0.33   0.50                 0.50   0.50   0.50          0.33       5    0.0  
+       4.00          4.00          2.67   2.67          0.33   0.34                        0.33   2.67      37    4.0  
 
 
 
 
 Loop-Carried Dependencies Analysis Report
 -----------------------------------------
+1982 |  4.0 | vfmadd132ps	%ymm3, %ymm2, %ymm1     | [1982]
+1984 |  4.0 | vfmadd132ps	%ymm2, %ymm1, %ymm0     | [1984]
 

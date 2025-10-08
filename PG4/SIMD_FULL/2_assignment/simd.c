@@ -166,11 +166,11 @@ void reference_reverse_8xfloat(float *src, float *dst)
       // Only one block can be measured at a time, so comment out all the others.
       // NOTE: The OSACA report for the reference code is for one iteration or 1/vlen the amount of work
       //       that your student SIMD code will do.
-      BEGIN_INSTRUMENTATION; // Mark the start of the code for osaca/mca
+      //BEGIN_INSTRUMENTATION; // Mark the start of the code for osaca/mca
 
       dst[(vlen-1)-vid] = src[vid];
 
-      END_INSTRUMENTATION; //
+      //END_INSTRUMENTATION; //
     }
 
 
@@ -185,7 +185,7 @@ void student_reverse_8xfloat(float *src, float *dst)
 
 
   // STUDENT_TODO: Uncomment this instrumentation block, comment out the others, then run 'make measure-osaca'
-  BEGIN_INSTRUMENTATION;
+  //BEGIN_INSTRUMENTATION;
   {
     /*
        STUDENT_TODO: Add student code below.
@@ -202,7 +202,7 @@ void student_reverse_8xfloat(float *src, float *dst)
        End of student code.
     */
   }
-  END_INSTRUMENTATION;
+  //END_INSTRUMENTATION;
 
   // Store the result back to memory.
   _mm256_storeu_ps(&dst[0],output);
@@ -275,6 +275,8 @@ void student_rotate_by_4_8xfloat(float *src, float *dst)
     // ...
     // ...
     // output = ...;
+    __m256i idx = _mm256_setr_epi32(4,5,6,7,0,1,2,3); // create index vector
+    output = _mm256_permutevar8x32_ps(input, idx); // permute input according to index vector
 
     /*
        End of student code.
@@ -354,6 +356,8 @@ void student_rotate_by_2_8xfloat(float *src, float *dst)
     // ...
     // ...
     // output = ...;
+    __m256i idx = _mm256_setr_epi32(2,3,4,5,6,7,0,1); // create index vector
+    output = _mm256_permutevar8x32_ps(input, idx); // permute input according to index vector
 
     /*
        End of student code.
@@ -433,6 +437,8 @@ void student_rotate_by_1_8xfloat(float *src, float *dst)
     // ...
     // ...
     // output = ...;
+    __m256i idx = _mm256_setr_epi32(1,2,3,4,5,6,7,0); // create index vector
+    output = _mm256_permutevar8x32_ps(input, idx); // permute input according to index vector
 
     /*
        End of student code.
@@ -451,7 +457,7 @@ void test_rotate_by_1_8xfloat()
   float bt[8] = {-1,-1,-1,-1, -1,-1,-1,-1};
   float br[8] = {-1,-1,-1,-1, -1,-1,-1,-1};
 
-    reference_rotate_by_1_8xfloat(a, bt);
+  reference_rotate_by_1_8xfloat(a, bt);
   student_rotate_by_1_8xfloat(a, br);
 
   float res = max_pair_wise_diff(8, bt, br);
@@ -500,9 +506,13 @@ void reference_transpose_4x2_colmaj_8xfloat(float *src, float *dst)
   const int rs_d = n;
   const int cs_d = 1;
 
-  for (int i = 0; i < m; ++i )
-      for (int j = 0; j < n; ++j )
-	dst[j*cs_d + i*rs_d] = src[i*cs_s + j*rs_s];
+  for (int i = 0; i < m; ++i ) {
+      for (int j = 0; j < n; ++j ) {
+        //BEGIN_INSTRUMENTATION;
+        dst[j*cs_d + i*rs_d] = src[i*cs_s + j*rs_s];
+        //END_INSTRUMENTATION;
+      }
+  }
 
 }
 
@@ -524,6 +534,8 @@ void student_transpose_4x2_colmaj_8xfloat(float *src, float *dst)
     // ...
     // ...
     // output = ...;
+    __m256i idx = _mm256_setr_epi32(0,4,1,5,2,6,3,7); // create index vector
+    output = _mm256_permutevar8x32_ps(input, idx); // permute input according to index vector
 
     /*
        End of student code.
@@ -576,7 +588,13 @@ void student_rotate_by_1_16xfloat(float *src, float *dst)
     // ...
     // ...
     // output = ...;
-
+    __m256i idx1 = _mm256_setr_epi32(1,2,3,4,5,6,7,8); // create index vector for first 8 elements
+    __m256i idx2 = _mm256_setr_epi32(9,10,11,12,13,14,15,0); // create index vector for last 8 elements
+    output00_07 = _mm256_permutevar8x32_ps(_mm256_blend_ps(input00_07, input08_15, 0x01), idx1); // permute input according to index vector
+    output08_15 = _mm256_permutevar8x32_ps(_mm256_blend_ps(input00_07, input08_15, 0xFE), idx2); // permute input according to index vector
+    output00_07 = _mm256_permutevar8x32_ps(output00_07, _mm256_setr_epi32(0,1,2,3,4,5,6,7)); // rotate the first 8 elements
+    output08_15 = _mm256_permutevar8x32_ps(output08_15, _mm256_setr_epi32(0,1,2,3,4,5,6,7)); // rotate the last 8 elements
+  
     /*
        End of student code.
     */
@@ -712,7 +730,27 @@ void student_transpose_4x4_colmaj_8xfloat(float *src, float *dst)
     // ...
     // ...
     // output = ...;
+    // Extract 128-bit lanes (each lane holds 4 floats, representing columns in column-major layout)
+    __m128 col0 = _mm256_extractf128_ps(input00_07, 0); // extract lower 128 bits (src[0..3])
+    __m128 col1 = _mm256_extractf128_ps(input00_07, 1); // extract upper 128 bits (src[4..7])
+    __m128 col2 = _mm256_extractf128_ps(input08_15, 0); // extract lower 128 bits (src[8..11])
+    __m128 col3 = _mm256_extractf128_ps(input08_15, 1); // extract upper 128 bits (src[12..15])
 
+    // Interleave pairs of columns to prepare rows
+    __m128 t0 = _mm_unpacklo_ps(col0, col1); // unpack and interleave lower halves: [0,4,1,5]
+    __m128 t1 = _mm_unpackhi_ps(col0, col1); // unpack and interleave upper halves: [2,6,3,7]
+    __m128 t2 = _mm_unpacklo_ps(col2, col3); // unpack and interleave lower halves: [8,12,9,13]
+    __m128 t3 = _mm_unpackhi_ps(col2, col3); // unpack and interleave upper halves: [10,14,11,15]
+
+    // Form transposed rows by merging the intermediate vectors
+    __m128 row0 = _mm_movelh_ps(t0, t2); // move low halves: [0,4,8,12]
+    __m128 row1 = _mm_movehl_ps(t2, t0); // move high halves: [1,5,9,13]
+    __m128 row2 = _mm_movelh_ps(t1, t3); // move low halves: [2,6,10,14]
+    __m128 row3 = _mm_movehl_ps(t3, t1); // move high halves: [3,7,11,15]
+
+    // Pack rows into two 256-bit vectors: low = row0,row2? We want output00_07 = [row0 row1]
+    output00_07 = _mm256_set_m128(row1, row0); // set_m128 takes (high, low)
+    output08_15 = _mm256_set_m128(row3, row2); // set_m128 takes (high, low)
     /*
        End of student code.
     */
@@ -813,6 +851,23 @@ void student_transpose_8x4_colmaj_8xfloat(float *src, float *dst)
     // ...
     // ...
     // output = ...;
+    // Step 1: Transpose 4x4 blocks using unpack operations
+    __m256 t0 = _mm256_unpacklo_ps(input00_07, input08_15); // unpack and interleave lower halves
+    __m256 t1 = _mm256_unpacklo_ps(input16_23, input24_31); // unpack and interleave lower halves
+    __m256 t2 = _mm256_unpackhi_ps(input00_07, input08_15); // unpack and interleave upper halves
+    __m256 t3 = _mm256_unpackhi_ps(input16_23, input24_31); // unpack and interleave upper halves
+
+    // Step 2: Transpose 8x8 using permute2f128
+    output00_07 = _mm256_permute2f128_ps(t0, t1, 0x20); // combine lower halves
+    output08_15 = _mm256_permute2f128_ps(t2, t3, 0x20); // combine lower halves
+    output16_23 = _mm256_permute2f128_ps(t0, t1, 0x31); // combine upper halves
+    output24_31 = _mm256_permute2f128_ps(t2, t3, 0x31); // combine upper halves
+
+    // Step 3: Final reordering to achieve the exact transpose layout
+    output00_07 = _mm256_permutevar8x32_ps(output00_07, _mm256_set_epi32(7,6,3,2,5,4,1,0)); // reorder 1st row elements
+    output08_15 = _mm256_permutevar8x32_ps(output08_15, _mm256_set_epi32(7,6,3,2,5,4,1,0)); // reorder 2nd row elements
+    output16_23 = _mm256_permutevar8x32_ps(output16_23, _mm256_set_epi32(7,6,3,2,5,4,1,0)); // reorder 3rd row elements
+    output24_31 = _mm256_permutevar8x32_ps(output24_31, _mm256_set_epi32(7,6,3,2,5,4,1,0)); // reorder 4th row elements
 
     /*
        End of student code.
@@ -880,7 +935,7 @@ void reference_gather_at_stride_8xfloat(float *src, float *dst)
 
       dst[vid] = src[vid*stride];
 
-        //END_INSTRUMENTATION;
+      //END_INSTRUMENTATION;
     }
 
 }
@@ -907,13 +962,16 @@ void student_gather_at_stride_8xfloat(float *src, float *dst)
     // ...
     // ...
     // output = ...;
+    __m256i idx = _mm256_setr_epi32(0, 4, 8, 12, 16, 20, 24, 28);  // Indices for stride 4
+    output00_07 = _mm256_i32gather_ps(src, idx, 4);  // Gather elements at stride indices
+  
 
     /*
        End of student code.
     */
   }
 
-    //END_INSTRUMENTATION;
+  //END_INSTRUMENTATION;
 
   // Store the result back to memory.
   _mm256_storeu_ps(&dst[ 0],output00_07);
@@ -971,7 +1029,7 @@ void reference_scatter_at_stride_8xfloat(float *src, float *dst)
 
       dst[vid*stride] = src[vid];
 
-        //END_INSTRUMENTATION;
+      //END_INSTRUMENTATION;
     }
 
 }
@@ -999,7 +1057,24 @@ void student_scatter_at_stride_8xfloat(float *src, float *dst)
     // ...
     // ...
     // output = ...;
+    // Step 1: Initialize output vectors to zero
+    __m256i idx = _mm256_setr_epi32(0, 0, 0, 0, 1, 0, 0, 0);  // indices for contiguous storage
+    __m256i idx1 = _mm256_setr_epi32(2,0,0,0,3,0,0,0); // create index vector for first element
+    __m256i idx2 = _mm256_setr_epi32(4,0,0,0,5,0,0,0); // create index vector for first element
+    __m256i idx3 = _mm256_setr_epi32(6,0,0,0,7,0,0,0); // create index vector for first element
 
+    // Step 2: Scatter elements to their respective positions
+    __m256 output00_07_v1 = _mm256_permutevar8x32_ps(input00_07, idx); // permute input according to index vector
+    __m256 output08_15_v1 = _mm256_permutevar8x32_ps(input00_07, idx1); // permute input according to index vector  
+    __m256 output16_23_v1 = _mm256_permutevar8x32_ps(input00_07, idx2); // permute input according to index vector
+    __m256 output24_31_v1 = _mm256_permutevar8x32_ps(input00_07, idx3); // permute input according to index vector
+
+    // Step 3: Combine the scattered elements into final output vectors
+    output00_07 = _mm256_blend_ps(output00_07, output00_07_v1, 0b00010001); // blend to get first element in place
+    output08_15 = _mm256_blend_ps(output08_15, output08_15_v1, 0b00010001); // blend to get second element in place
+    output16_23 = _mm256_blend_ps(output16_23, output16_23_v1, 0b00010001); // blend to get third element in place
+    output24_31 = _mm256_blend_ps(output24_31, output24_31_v1, 0b00010001); // blend to get fourth element in place
+    
     /*
        End of student code.
     */
@@ -1107,6 +1182,26 @@ void student_matvec_8x8_colmaj_8xfloat(float *A, float *x, float *y)
     // ...
     // ... __m256 temp = _mm256_fmadd_ps(....)
     // ...
+    // build up the result in y00_07
+    __m256 x0 = _mm256_set1_ps(x[0]);  // broadcast x[0]
+    __m256 x1 = _mm256_set1_ps(x[1]);  // broadcast x[1]
+    __m256 x2 = _mm256_set1_ps(x[2]);  // broadcast x[2]
+    __m256 x3 = _mm256_set1_ps(x[3]);  // broadcast x[3]
+    __m256 x4 = _mm256_set1_ps(x[4]);  // broadcast x[4]
+    __m256 x5 = _mm256_set1_ps(x[5]);  // broadcast x[5]
+    __m256 x6 = _mm256_set1_ps(x[6]);  // broadcast x[6]
+    __m256 x7 = _mm256_set1_ps(x[7]);  // broadcast x[7]
+
+    // perform the matrix-vector multiplication using FMA operations
+    __m256 x0_v1 = _mm256_fmadd_ps(A00_07, x0, _mm256_setzero_ps()); // (fused multiply add) + A[:,0] * x[0]
+    __m256 x1_v1 = _mm256_fmadd_ps(A08_15, x1, x0_v1);  // + A[:,1] * x[1]
+    __m256 x2_v1 = _mm256_fmadd_ps(A16_23, x2, x1_v1);  // + A[:,2] * x[2]
+    __m256 x3_v1 = _mm256_fmadd_ps(A24_31, x3, x2_v1);  // + A[:,3] * x[3]
+    __m256 x4_v1 = _mm256_fmadd_ps(A32_39, x4, x3_v1);  // + A[:,4] * x[4]
+    __m256 x5_v1 = _mm256_fmadd_ps(A40_47, x5, x4_v1);  // + A[:,5] * x[5]
+    __m256 x6_v1 = _mm256_fmadd_ps(A48_55, x6, x5_v1);  // + A[:,6] * x[6]
+    y00_07 = _mm256_fmadd_ps(A56_63, x7, x6_v1);  // + A[:,7] * x[7]
+
 
     /*
        End of student code.
