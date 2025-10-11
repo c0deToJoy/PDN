@@ -751,6 +751,7 @@ void student_transpose_4x4_colmaj_8xfloat(float *src, float *dst)
     // Pack rows into two 256-bit vectors: low = row0,row2? We want output00_07 = [row0 row1]
     output00_07 = _mm256_set_m128(row1, row0); // set_m128 takes (high, low)
     output08_15 = _mm256_set_m128(row3, row2); // set_m128 takes (high, low)
+    
     /*
        End of student code.
     */
@@ -964,7 +965,6 @@ void student_gather_at_stride_8xfloat(float *src, float *dst)
     // output = ...;
     __m256i idx = _mm256_setr_epi32(0, 4, 8, 12, 16, 20, 24, 28);  // Indices for stride 4
     output00_07 = _mm256_i32gather_ps(src, idx, 4);  // Gather elements at stride indices
-  
 
     /*
        End of student code.
@@ -1201,7 +1201,6 @@ void student_matvec_8x8_colmaj_8xfloat(float *A, float *x, float *y)
     __m256 x5_v1 = _mm256_fmadd_ps(A40_47, x5, x4_v1);  // + A[:,5] * x[5]
     __m256 x6_v1 = _mm256_fmadd_ps(A48_55, x6, x5_v1);  // + A[:,6] * x[6]
     y00_07 = _mm256_fmadd_ps(A56_63, x7, x6_v1);  // + A[:,7] * x[7]
-
 
     /*
        End of student code.
