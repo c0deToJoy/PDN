@@ -171,7 +171,7 @@ void student_bcast(int root_tid, int num_threads, float *input_sequential, float
     /*
       STUDENT_TODO
     */
-    output_sequential[tid] = 0; // FIXME!
+    output_sequential[tid] = shared_memory[root_tid];
     /*
       END_STUDENT_TODO
     */
@@ -291,7 +291,7 @@ void student_reduction( int root_tid, int num_threads,
 	output_sequential[root_tid] = 0.0f;
 	for(int src_tid = 0; src_tid < num_threads; src_tid++)
 	  {
-	    output_sequential[root_tid] += 0; // FIXME!
+	    output_sequential[root_tid] += shared_memory[src_tid];
 	  }
       }
     /*
@@ -390,7 +390,7 @@ void student_scatter(int root_tid, int num_threads, float *input_sequential, flo
     /*
       STUDENT_TODO
     */
-    output_sequential[tid] = 0;  // FIXME!
+    output_sequential[tid] = shared_memory[tid];
     /*
       END_STUDENT_TODO
     */
@@ -507,7 +507,7 @@ void student_gather( int root_tid, int num_threads,
       {
 	for(int src_tid = 0; src_tid < num_threads; src_tid++)
 	  {
-	    output_sequential[src_tid + root_tid*num_threads] = 0;  // FIXME!
+	    output_sequential[src_tid + root_tid*num_threads] = shared_memory[src_tid];
 	  }
       }
     /*
@@ -623,7 +623,7 @@ void student_all_reduce( int num_threads,
     output_sequential[tid] = 0.0f;
     for(int src_tid = 0; src_tid < num_threads; src_tid++)
       {
-	output_sequential[tid] += 0;   // FIXME!
+	output_sequential[tid] += shared_memory[src_tid];
       }
 
     /*
@@ -733,7 +733,7 @@ void student_all_gather( int num_threads,
     */
     for(int src_tid = 0; src_tid < num_threads; src_tid++)
       {
-	output_sequential[src_tid + tid*num_threads] = 0; // FIXME!
+	      output_sequential[src_tid + tid*num_threads] = shared_memory[src_tid];
       }
 
     /*
@@ -848,7 +848,7 @@ void student_all_to_all( int num_threads,
       STUDENT_TODO
     */
     for( int i = 0; i < num_threads; ++i )
-      output_sequential[i + tid*num_threads] = 0; // FIXME!
+      output_sequential[i + tid*num_threads] = shared_memory[i * num_threads + tid];
 
 
     /*
