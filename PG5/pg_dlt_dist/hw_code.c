@@ -1,4 +1,4 @@
-/*
+ /*
   Data Layout Transformations and Data Distributions
 
   Instructions: find all instances of "STUDENT_TODO" and modify the code until
@@ -73,7 +73,7 @@ void print_8xfloat_mem(char *name, float *src)
   for( int vid = 0; vid < vlen; ++vid )
     {
       if ( src[vid] < 0.0f )
-	printf( " x, ", src[vid] );
+    printf( " x, " );
       else
 	printf( "%2.f, ", src[vid] );
 
@@ -88,7 +88,7 @@ void print_float_mem(char *name, int vlen, float *src)
   for( int vid = 0; vid < vlen; ++vid )
     {
       if ( src[vid] < 0.0f )
-	printf( " x, ", src[vid] );
+    printf( " x, " );
       else
 	printf( "%2.f, ", src[vid] );
     }
@@ -104,7 +104,7 @@ void print_float_mem_as_vects(char *name, int size, int vlen, float *src)
       for( int vid = 0; vid < vlen; ++vid )
 	{
 	  if ( src[vid+i] < 0.0f )
-	    printf( " x, ", src[vid+i] );
+	    printf( " x, " );
 	  else
 	    printf( "%2.f, ", src[vid+i] );
 	}
@@ -183,7 +183,7 @@ void student_nodlt_2d(int n, int opt, int blk, float *src, float *dst)
 	
 	// Only modify this block
 	int idx_dst = i0 + i1;
-	int idx_src = 0; // FIXME!
+	int idx_src = i0 + i1;
 
 	/* 
 	   End of student code.
@@ -257,8 +257,8 @@ void student_dlt_c_array_2d(int n, int opt, int blk, float *src, float *dst)
 	
 	// Only modify this block
 	const int idx_dst        = i0 + i1;
-	const int idx0_src_dlt   = 0;// FIXME!
-	const int idx1_src_dlt   = 0;// FIXME!
+	const int idx0_src_dlt   = i0 / block0;
+	const int idx1_src_dlt   = i1 / block1;
 
 	/* 
 	   End of student code.
@@ -316,8 +316,8 @@ void student_dlt_c_array_linearized_2d(int n, int opt, int blk, float *src, floa
 	   STUDENT_TODO: Add student code below.
 	*/
 	// Only modify this block
-	const int idx0_src_dlt   = 0;// FIXME!
-	const int idx1_src_dlt   = 0;// FIXME!
+	const int idx0_src_dlt   = i0 / block0;
+	const int idx1_src_dlt   = i1 / block1;
 	
 	src_dlt[idx0_src_dlt * num_elements1 + idx1_src_dlt] = src[idx_src];
 	/* 
@@ -394,7 +394,7 @@ void student_dlt_inc_2d(int n, int opt, int blk, float *src, float *dst)
 	*/
 	
 	// Only modify this block
-	src_dlt_idx = 0; // FIXME!
+	src_dlt_idx = src_dlt_idx + 1;
 
 	/* 
 	   End of student code.
@@ -542,7 +542,7 @@ void student_dist_block_1d(int n, int num_of_ranks, float *src, float *dst)
 	   STUDENT_TODO: Add student code below.
 	*/
 	// Only modify this block
-	const int i = 0; // FIXME!
+	const int i = rid*num_of_elems_per_rank + eid;
 	/* 
 	   End of student code.
 	*/
@@ -607,7 +607,7 @@ void student_dist_cyclic_1d(int n, int num_of_ranks, float *src, float *dst)
 	   STUDENT_TODO: Add student code below.
 	*/
 	// Only modify this block
-	const int i = 0; // FIXME! 
+	const int i = rid + eid * num_of_ranks;
 	/* 
 	   End of student code.
 	*/
@@ -699,7 +699,7 @@ void student_dist_block_cyclic_1d(int n, int num_of_ranks, int num_of_elems_per_
 	     STUDENT_TODO: Add student code below.
 	  */
 	  // Only modify this block
-	  const int i = 0; // FIXME!
+	  const int i = bid * num_of_ranks * num_of_elems_per_block + rid * num_of_elems_per_block + eid;
 	  /* 
 	     End of student code.
 	  */
@@ -762,8 +762,8 @@ void student_dist_block_cyclic_1d_the_hard_one(int n, int num_of_ranks, int num_
 	 STUDENT_TODO: Add student code below.
       */
       // Only modify this block
-      const int bid = i / (num_of_ranks * num_of_elems_per_block); 
-      const int rid = 0; // FIXME (i % ((XX * ZZ)) ) / YY; // where XX, ZZ, and YY are something?
+      const int bid = i / (num_of_ranks * num_of_elems_per_block);
+      const int rid = (i % (num_of_ranks * num_of_elems_per_block)) / num_of_elems_per_block; // (i % ((XX * ZZ)) ) / YY;
       const int eid = i % num_of_elems_per_block;
       /* 
 	 End of student code.
@@ -786,7 +786,7 @@ void student_dist_block_cyclic_1d_the_hard_one(int n, int num_of_ranks, int num_
       */
       // Only modify this block
       const int bid = i / (num_of_ranks * num_of_elems_per_block);
-      const int rid = 0; // FIXME (i % ((XX * ZZ)) ) / YY;
+      const int rid = (i % (num_of_ranks * num_of_elems_per_block)) / num_of_elems_per_block; // (i % ((XX * ZZ)) ) / YY;
       const int eid = i % num_of_elems_per_block;
       /* 
 	 End of student code.
@@ -807,7 +807,7 @@ void student_dist_block_cyclic_1d_the_hard_one(int n, int num_of_ranks, int num_
       */
       // Only modify this block
       const int bid = i / (num_of_ranks * num_of_elems_per_block);
-      const int rid = 0; // FIXME (i % ((XX * ZZ)) ) / YY;
+      const int rid = (i % (num_of_ranks * num_of_elems_per_block)) / num_of_elems_per_block; // (i % ((XX * ZZ)) ) / YY;
       const int eid = i % num_of_elems_per_block;
 
       /* 
