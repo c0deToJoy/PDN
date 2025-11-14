@@ -1,0 +1,524 @@
+
+
+DBG> n: 8 opt: 0, bound0: 8, block0: 4, bound1: 4, block1: 1,  
+DBG> idx_dst: 0, idx_src 0, i0: 0, i1: 0
+DBG> idx_dst: 1, idx_src 1, i0: 0, i1: 1
+DBG> idx_dst: 2, idx_src 2, i0: 0, i1: 2
+DBG> idx_dst: 3, idx_src 3, i0: 0, i1: 3
+DBG> idx_dst: 4, idx_src 4, i0: 4, i1: 0
+DBG> idx_dst: 5, idx_src 5, i0: 4, i1: 1
+DBG> idx_dst: 6, idx_src 6, i0: 4, i1: 2
+DBG> idx_dst: 7, idx_src 7, i0: 4, i1: 3
+test_dlt_2d: PASS: 01.0
+
+
+DBG> n: 8 opt: 1, bound0: 4, block0: 1, bound1: 8, block1: 4,  
+DBG> idx_dst: 0, idx_src 0, i0: 0, i1: 0
+DBG> idx_dst: 4, idx_src 4, i0: 0, i1: 4
+DBG> idx_dst: 1, idx_src 1, i0: 1, i1: 0
+DBG> idx_dst: 5, idx_src 5, i0: 1, i1: 4
+DBG> idx_dst: 2, idx_src 2, i0: 2, i1: 0
+DBG> idx_dst: 6, idx_src 6, i0: 2, i1: 4
+DBG> idx_dst: 3, idx_src 3, i0: 3, i1: 0
+DBG> idx_dst: 7, idx_src 7, i0: 3, i1: 4
+test_dlt_2d: PASS: 01.1
+
+
+DBG> n: 8 opt: 0, bound0: 8, block0: 4, bound1: 4, block1: 1,  
+DBG> idx_dst: 0, idx0_src_dlt 0, idx1_src_dlt 0, i0: 0, i1: 0
+DBG> idx_dst: 1, idx0_src_dlt 0, idx1_src_dlt 1, i0: 0, i1: 1
+DBG> idx_dst: 2, idx0_src_dlt 0, idx1_src_dlt 2, i0: 0, i1: 2
+DBG> idx_dst: 3, idx0_src_dlt 0, idx1_src_dlt 3, i0: 0, i1: 3
+DBG> idx_dst: 4, idx0_src_dlt 1, idx1_src_dlt 0, i0: 4, i1: 0
+DBG> idx_dst: 5, idx0_src_dlt 1, idx1_src_dlt 1, i0: 4, i1: 1
+DBG> idx_dst: 6, idx0_src_dlt 1, idx1_src_dlt 2, i0: 4, i1: 2
+DBG> idx_dst: 7, idx0_src_dlt 1, idx1_src_dlt 3, i0: 4, i1: 3
+test_dlt_2d: PASS: 02.0
+
+
+DBG> n: 8 opt: 1, bound0: 4, block0: 1, bound1: 8, block1: 4,  
+DBG> idx_dst: 0, idx0_src_dlt 0, idx1_src_dlt 0, i0: 0, i1: 0
+DBG> idx_dst: 4, idx0_src_dlt 0, idx1_src_dlt 1, i0: 0, i1: 4
+DBG> idx_dst: 1, idx0_src_dlt 1, idx1_src_dlt 0, i0: 1, i1: 0
+DBG> idx_dst: 5, idx0_src_dlt 1, idx1_src_dlt 1, i0: 1, i1: 4
+DBG> idx_dst: 2, idx0_src_dlt 2, idx1_src_dlt 0, i0: 2, i1: 0
+DBG> idx_dst: 6, idx0_src_dlt 2, idx1_src_dlt 1, i0: 2, i1: 4
+DBG> idx_dst: 3, idx0_src_dlt 3, idx1_src_dlt 0, i0: 3, i1: 0
+DBG> idx_dst: 7, idx0_src_dlt 3, idx1_src_dlt 1, i0: 3, i1: 4
+test_dlt_2d: PASS: 02.1
+
+
+DBG> n: 8 opt: 0, bound0: 8, block0: 4, bound1: 4, block1: 1,  
+DBG> idx_dst: 0, idx0_src_dlt 0, idx1_src_dlt 0, i0: 0, i1: 0
+DBG> idx_dst: 1, idx0_src_dlt 0, idx1_src_dlt 1, i0: 0, i1: 1
+DBG> idx_dst: 2, idx0_src_dlt 0, idx1_src_dlt 2, i0: 0, i1: 2
+DBG> idx_dst: 3, idx0_src_dlt 0, idx1_src_dlt 3, i0: 0, i1: 3
+DBG> idx_dst: 4, idx0_src_dlt 1, idx1_src_dlt 0, i0: 4, i1: 0
+DBG> idx_dst: 5, idx0_src_dlt 1, idx1_src_dlt 1, i0: 4, i1: 1
+DBG> idx_dst: 6, idx0_src_dlt 1, idx1_src_dlt 2, i0: 4, i1: 2
+DBG> idx_dst: 7, idx0_src_dlt 1, idx1_src_dlt 3, i0: 4, i1: 3
+test_dlt_2d: PASS: 03.0
+
+
+DBG> n: 8 opt: 1, bound0: 4, block0: 1, bound1: 8, block1: 4,  
+DBG> idx_dst: 0, idx0_src_dlt 0, idx1_src_dlt 0, i0: 0, i1: 0
+DBG> idx_dst: 4, idx0_src_dlt 0, idx1_src_dlt 1, i0: 0, i1: 4
+DBG> idx_dst: 1, idx0_src_dlt 1, idx1_src_dlt 0, i0: 1, i1: 0
+DBG> idx_dst: 5, idx0_src_dlt 1, idx1_src_dlt 1, i0: 1, i1: 4
+DBG> idx_dst: 2, idx0_src_dlt 2, idx1_src_dlt 0, i0: 2, i1: 0
+DBG> idx_dst: 6, idx0_src_dlt 2, idx1_src_dlt 1, i0: 2, i1: 4
+DBG> idx_dst: 3, idx0_src_dlt 3, idx1_src_dlt 0, i0: 3, i1: 0
+DBG> idx_dst: 7, idx0_src_dlt 3, idx1_src_dlt 1, i0: 3, i1: 4
+test_dlt_2d: PASS: 03.1
+
+
+DBG> n: 8 opt: 0, bound0: 8, block0: 4, bound1: 4, block1: 1,  
+DBG> idx_dst: 0, src_dlt_idx 0, i0: 0, i1: 0
+DBG> idx_dst: 1, src_dlt_idx 1, i0: 0, i1: 1
+DBG> idx_dst: 2, src_dlt_idx 2, i0: 0, i1: 2
+DBG> idx_dst: 3, src_dlt_idx 3, i0: 0, i1: 3
+DBG> idx_dst: 4, src_dlt_idx 4, i0: 4, i1: 0
+DBG> idx_dst: 5, src_dlt_idx 5, i0: 4, i1: 1
+DBG> idx_dst: 6, src_dlt_idx 6, i0: 4, i1: 2
+DBG> idx_dst: 7, src_dlt_idx 7, i0: 4, i1: 3
+test_dlt_2d: PASS: 04.0
+
+
+DBG> n: 8 opt: 1, bound0: 4, block0: 1, bound1: 8, block1: 4,  
+DBG> idx_dst: 0, src_dlt_idx 0, i0: 0, i1: 0
+DBG> idx_dst: 4, src_dlt_idx 1, i0: 0, i1: 4
+DBG> idx_dst: 1, src_dlt_idx 2, i0: 1, i1: 0
+DBG> idx_dst: 5, src_dlt_idx 3, i0: 1, i1: 4
+DBG> idx_dst: 2, src_dlt_idx 4, i0: 2, i1: 0
+DBG> idx_dst: 6, src_dlt_idx 5, i0: 2, i1: 4
+DBG> idx_dst: 3, src_dlt_idx 6, i0: 3, i1: 0
+DBG> idx_dst: 7, src_dlt_idx 7, i0: 3, i1: 4
+test_dlt_2d: PASS: 04.1
+DBG-DIST> rid: 0, eid: 0, i: 0
+DBG-DIST> rid: 0, eid: 1, i: 1
+DBG-DIST> rid: 0, eid: 2, i: 2
+DBG-DIST> rid: 0, eid: 3, i: 3
+DBG-DIST> rid: 1, eid: 0, i: 4
+DBG-DIST> rid: 1, eid: 1, i: 5
+DBG-DIST> rid: 1, eid: 2, i: 6
+DBG-DIST> rid: 1, eid: 3, i: 7
+DBG-DIST> rid: 2, eid: 0, i: 8
+DBG-DIST> rid: 2, eid: 1, i: 9
+DBG-DIST> rid: 2, eid: 2, i: 10
+DBG-DIST> rid: 2, eid: 3, i: 11
+DBG-DIST> rid: 3, eid: 0, i: 12
+DBG-DIST> rid: 3, eid: 1, i: 13
+DBG-DIST> rid: 3, eid: 2, i: 14
+DBG-DIST> rid: 3, eid: 3, i: 15
+DBG-COMP> rid: 0, eid: 0
+DBG-COMP> rid: 0, eid: 1
+DBG-COMP> rid: 0, eid: 2
+DBG-COMP> rid: 0, eid: 3
+DBG-COMP> rid: 1, eid: 0
+DBG-COMP> rid: 1, eid: 1
+DBG-COMP> rid: 1, eid: 2
+DBG-COMP> rid: 1, eid: 3
+DBG-COMP> rid: 2, eid: 0
+DBG-COMP> rid: 2, eid: 1
+DBG-COMP> rid: 2, eid: 2
+DBG-COMP> rid: 2, eid: 3
+DBG-COMP> rid: 3, eid: 0
+DBG-COMP> rid: 3, eid: 1
+DBG-COMP> rid: 3, eid: 2
+DBG-COMP> rid: 3, eid: 3
+DBG-COLL> rid: 0, eid: 0, i: 0
+DBG-COLL> rid: 0, eid: 1, i: 1
+DBG-COLL> rid: 0, eid: 2, i: 2
+DBG-COLL> rid: 0, eid: 3, i: 3
+DBG-COLL> rid: 1, eid: 0, i: 4
+DBG-COLL> rid: 1, eid: 1, i: 5
+DBG-COLL> rid: 1, eid: 2, i: 6
+DBG-COLL> rid: 1, eid: 3, i: 7
+DBG-COLL> rid: 2, eid: 0, i: 8
+DBG-COLL> rid: 2, eid: 1, i: 9
+DBG-COLL> rid: 2, eid: 2, i: 10
+DBG-COLL> rid: 2, eid: 3, i: 11
+DBG-COLL> rid: 3, eid: 0, i: 12
+DBG-COLL> rid: 3, eid: 1, i: 13
+DBG-COLL> rid: 3, eid: 2, i: 14
+DBG-COLL> rid: 3, eid: 3, i: 15
+test_dist_1d: PASS: 05.0
+DBG-DIST> rid: 0, eid: 0, i: 0
+DBG-DIST> rid: 0, eid: 1, i: 4
+DBG-DIST> rid: 0, eid: 2, i: 8
+DBG-DIST> rid: 0, eid: 3, i: 12
+DBG-DIST> rid: 1, eid: 0, i: 1
+DBG-DIST> rid: 1, eid: 1, i: 5
+DBG-DIST> rid: 1, eid: 2, i: 9
+DBG-DIST> rid: 1, eid: 3, i: 13
+DBG-DIST> rid: 2, eid: 0, i: 2
+DBG-DIST> rid: 2, eid: 1, i: 6
+DBG-DIST> rid: 2, eid: 2, i: 10
+DBG-DIST> rid: 2, eid: 3, i: 14
+DBG-DIST> rid: 3, eid: 0, i: 3
+DBG-DIST> rid: 3, eid: 1, i: 7
+DBG-DIST> rid: 3, eid: 2, i: 11
+DBG-DIST> rid: 3, eid: 3, i: 15
+DBG-COMP> rid: 0, eid: 0
+DBG-COMP> rid: 0, eid: 1
+DBG-COMP> rid: 0, eid: 2
+DBG-COMP> rid: 0, eid: 3
+DBG-COMP> rid: 1, eid: 0
+DBG-COMP> rid: 1, eid: 1
+DBG-COMP> rid: 1, eid: 2
+DBG-COMP> rid: 1, eid: 3
+DBG-COMP> rid: 2, eid: 0
+DBG-COMP> rid: 2, eid: 1
+DBG-COMP> rid: 2, eid: 2
+DBG-COMP> rid: 2, eid: 3
+DBG-COMP> rid: 3, eid: 0
+DBG-COMP> rid: 3, eid: 1
+DBG-COMP> rid: 3, eid: 2
+DBG-COMP> rid: 3, eid: 3
+DBG-COLL> rid: 0, eid: 0, i: 0
+DBG-COLL> rid: 0, eid: 1, i: 4
+DBG-COLL> rid: 0, eid: 2, i: 8
+DBG-COLL> rid: 0, eid: 3, i: 12
+DBG-COLL> rid: 1, eid: 0, i: 1
+DBG-COLL> rid: 1, eid: 1, i: 5
+DBG-COLL> rid: 1, eid: 2, i: 9
+DBG-COLL> rid: 1, eid: 3, i: 13
+DBG-COLL> rid: 2, eid: 0, i: 2
+DBG-COLL> rid: 2, eid: 1, i: 6
+DBG-COLL> rid: 2, eid: 2, i: 10
+DBG-COLL> rid: 2, eid: 3, i: 14
+DBG-COLL> rid: 3, eid: 0, i: 3
+DBG-COLL> rid: 3, eid: 1, i: 7
+DBG-COLL> rid: 3, eid: 2, i: 11
+DBG-COLL> rid: 3, eid: 3, i: 15
+test_dist_1d: PASS: 06.0
+DBG-INIT> n: 16
+DBG-INIT> num_of_ranks: 4
+DBG-INIT> num_of_elems_per_block: 2
+DBG-INIT> num_of_blocks: 8
+DBG-INIT> num_of_elems_per_rank: 4
+ DBG-INIT> num_of_blocks_per_rank: 2
+DBG-DIST> rid: 0, bid: 0, eid: 0, i: 0
+DBG-DIST> rid: 0, bid: 0, eid: 1, i: 1
+DBG-DIST> rid: 0, bid: 1, eid: 0, i: 8
+DBG-DIST> rid: 0, bid: 1, eid: 1, i: 9
+DBG-DIST> rid: 1, bid: 0, eid: 0, i: 2
+DBG-DIST> rid: 1, bid: 0, eid: 1, i: 3
+DBG-DIST> rid: 1, bid: 1, eid: 0, i: 10
+DBG-DIST> rid: 1, bid: 1, eid: 1, i: 11
+DBG-DIST> rid: 2, bid: 0, eid: 0, i: 4
+DBG-DIST> rid: 2, bid: 0, eid: 1, i: 5
+DBG-DIST> rid: 2, bid: 1, eid: 0, i: 12
+DBG-DIST> rid: 2, bid: 1, eid: 1, i: 13
+DBG-DIST> rid: 3, bid: 0, eid: 0, i: 6
+DBG-DIST> rid: 3, bid: 0, eid: 1, i: 7
+DBG-DIST> rid: 3, bid: 1, eid: 0, i: 14
+DBG-DIST> rid: 3, bid: 1, eid: 1, i: 15
+DBG-DIST> rid: 0, bid: 0, eid: 0
+DBG-DIST> rid: 0, bid: 0, eid: 1
+DBG-DIST> rid: 0, bid: 1, eid: 0
+DBG-DIST> rid: 0, bid: 1, eid: 1
+DBG-DIST> rid: 1, bid: 0, eid: 0
+DBG-DIST> rid: 1, bid: 0, eid: 1
+DBG-DIST> rid: 1, bid: 1, eid: 0
+DBG-DIST> rid: 1, bid: 1, eid: 1
+DBG-DIST> rid: 2, bid: 0, eid: 0
+DBG-DIST> rid: 2, bid: 0, eid: 1
+DBG-DIST> rid: 2, bid: 1, eid: 0
+DBG-DIST> rid: 2, bid: 1, eid: 1
+DBG-DIST> rid: 3, bid: 0, eid: 0
+DBG-DIST> rid: 3, bid: 0, eid: 1
+DBG-DIST> rid: 3, bid: 1, eid: 0
+DBG-DIST> rid: 3, bid: 1, eid: 1
+DBG-COLL> rid: 0, bid: 0, eid: 0, i: 0
+DBG-COLL> rid: 0, bid: 0, eid: 1, i: 1
+DBG-COLL> rid: 0, bid: 1, eid: 0, i: 8
+DBG-COLL> rid: 0, bid: 1, eid: 1, i: 9
+DBG-COLL> rid: 1, bid: 0, eid: 0, i: 2
+DBG-COLL> rid: 1, bid: 0, eid: 1, i: 3
+DBG-COLL> rid: 1, bid: 1, eid: 0, i: 10
+DBG-COLL> rid: 1, bid: 1, eid: 1, i: 11
+DBG-COLL> rid: 2, bid: 0, eid: 0, i: 4
+DBG-COLL> rid: 2, bid: 0, eid: 1, i: 5
+DBG-COLL> rid: 2, bid: 1, eid: 0, i: 12
+DBG-COLL> rid: 2, bid: 1, eid: 1, i: 13
+DBG-COLL> rid: 3, bid: 0, eid: 0, i: 6
+DBG-COLL> rid: 3, bid: 0, eid: 1, i: 7
+DBG-COLL> rid: 3, bid: 1, eid: 0, i: 14
+DBG-COLL> rid: 3, bid: 1, eid: 1, i: 15
+test_dist_1d: PASS: 07.0 block-cyclic
+DBG-INIT> n: 16
+DBG-INIT> num_of_ranks: 4
+DBG-INIT> num_of_elems_per_block: 4
+DBG-INIT> num_of_blocks: 4
+DBG-INIT> num_of_elems_per_rank: 4
+ DBG-INIT> num_of_blocks_per_rank: 1
+DBG-DIST> rid: 0, bid: 0, eid: 0, i: 0
+DBG-DIST> rid: 0, bid: 0, eid: 1, i: 1
+DBG-DIST> rid: 0, bid: 0, eid: 2, i: 2
+DBG-DIST> rid: 0, bid: 0, eid: 3, i: 3
+DBG-DIST> rid: 1, bid: 0, eid: 0, i: 4
+DBG-DIST> rid: 1, bid: 0, eid: 1, i: 5
+DBG-DIST> rid: 1, bid: 0, eid: 2, i: 6
+DBG-DIST> rid: 1, bid: 0, eid: 3, i: 7
+DBG-DIST> rid: 2, bid: 0, eid: 0, i: 8
+DBG-DIST> rid: 2, bid: 0, eid: 1, i: 9
+DBG-DIST> rid: 2, bid: 0, eid: 2, i: 10
+DBG-DIST> rid: 2, bid: 0, eid: 3, i: 11
+DBG-DIST> rid: 3, bid: 0, eid: 0, i: 12
+DBG-DIST> rid: 3, bid: 0, eid: 1, i: 13
+DBG-DIST> rid: 3, bid: 0, eid: 2, i: 14
+DBG-DIST> rid: 3, bid: 0, eid: 3, i: 15
+DBG-DIST> rid: 0, bid: 0, eid: 0
+DBG-DIST> rid: 0, bid: 0, eid: 1
+DBG-DIST> rid: 0, bid: 0, eid: 2
+DBG-DIST> rid: 0, bid: 0, eid: 3
+DBG-DIST> rid: 1, bid: 0, eid: 0
+DBG-DIST> rid: 1, bid: 0, eid: 1
+DBG-DIST> rid: 1, bid: 0, eid: 2
+DBG-DIST> rid: 1, bid: 0, eid: 3
+DBG-DIST> rid: 2, bid: 0, eid: 0
+DBG-DIST> rid: 2, bid: 0, eid: 1
+DBG-DIST> rid: 2, bid: 0, eid: 2
+DBG-DIST> rid: 2, bid: 0, eid: 3
+DBG-DIST> rid: 3, bid: 0, eid: 0
+DBG-DIST> rid: 3, bid: 0, eid: 1
+DBG-DIST> rid: 3, bid: 0, eid: 2
+DBG-DIST> rid: 3, bid: 0, eid: 3
+DBG-COLL> rid: 0, bid: 0, eid: 0, i: 0
+DBG-COLL> rid: 0, bid: 0, eid: 1, i: 1
+DBG-COLL> rid: 0, bid: 0, eid: 2, i: 2
+DBG-COLL> rid: 0, bid: 0, eid: 3, i: 3
+DBG-COLL> rid: 1, bid: 0, eid: 0, i: 4
+DBG-COLL> rid: 1, bid: 0, eid: 1, i: 5
+DBG-COLL> rid: 1, bid: 0, eid: 2, i: 6
+DBG-COLL> rid: 1, bid: 0, eid: 3, i: 7
+DBG-COLL> rid: 2, bid: 0, eid: 0, i: 8
+DBG-COLL> rid: 2, bid: 0, eid: 1, i: 9
+DBG-COLL> rid: 2, bid: 0, eid: 2, i: 10
+DBG-COLL> rid: 2, bid: 0, eid: 3, i: 11
+DBG-COLL> rid: 3, bid: 0, eid: 0, i: 12
+DBG-COLL> rid: 3, bid: 0, eid: 1, i: 13
+DBG-COLL> rid: 3, bid: 0, eid: 2, i: 14
+DBG-COLL> rid: 3, bid: 0, eid: 3, i: 15
+test_dist_1d: PASS: 07.1 block
+DBG-INIT> n: 16
+DBG-INIT> num_of_ranks: 4
+DBG-INIT> num_of_elems_per_block: 1
+DBG-INIT> num_of_blocks: 16
+DBG-INIT> num_of_elems_per_rank: 4
+ DBG-INIT> num_of_blocks_per_rank: 4
+DBG-DIST> rid: 0, bid: 0, eid: 0, i: 0
+DBG-DIST> rid: 0, bid: 1, eid: 0, i: 4
+DBG-DIST> rid: 0, bid: 2, eid: 0, i: 8
+DBG-DIST> rid: 0, bid: 3, eid: 0, i: 12
+DBG-DIST> rid: 1, bid: 0, eid: 0, i: 1
+DBG-DIST> rid: 1, bid: 1, eid: 0, i: 5
+DBG-DIST> rid: 1, bid: 2, eid: 0, i: 9
+DBG-DIST> rid: 1, bid: 3, eid: 0, i: 13
+DBG-DIST> rid: 2, bid: 0, eid: 0, i: 2
+DBG-DIST> rid: 2, bid: 1, eid: 0, i: 6
+DBG-DIST> rid: 2, bid: 2, eid: 0, i: 10
+DBG-DIST> rid: 2, bid: 3, eid: 0, i: 14
+DBG-DIST> rid: 3, bid: 0, eid: 0, i: 3
+DBG-DIST> rid: 3, bid: 1, eid: 0, i: 7
+DBG-DIST> rid: 3, bid: 2, eid: 0, i: 11
+DBG-DIST> rid: 3, bid: 3, eid: 0, i: 15
+DBG-DIST> rid: 0, bid: 0, eid: 0
+DBG-DIST> rid: 0, bid: 1, eid: 0
+DBG-DIST> rid: 0, bid: 2, eid: 0
+DBG-DIST> rid: 0, bid: 3, eid: 0
+DBG-DIST> rid: 1, bid: 0, eid: 0
+DBG-DIST> rid: 1, bid: 1, eid: 0
+DBG-DIST> rid: 1, bid: 2, eid: 0
+DBG-DIST> rid: 1, bid: 3, eid: 0
+DBG-DIST> rid: 2, bid: 0, eid: 0
+DBG-DIST> rid: 2, bid: 1, eid: 0
+DBG-DIST> rid: 2, bid: 2, eid: 0
+DBG-DIST> rid: 2, bid: 3, eid: 0
+DBG-DIST> rid: 3, bid: 0, eid: 0
+DBG-DIST> rid: 3, bid: 1, eid: 0
+DBG-DIST> rid: 3, bid: 2, eid: 0
+DBG-DIST> rid: 3, bid: 3, eid: 0
+DBG-COLL> rid: 0, bid: 0, eid: 0, i: 0
+DBG-COLL> rid: 0, bid: 1, eid: 0, i: 4
+DBG-COLL> rid: 0, bid: 2, eid: 0, i: 8
+DBG-COLL> rid: 0, bid: 3, eid: 0, i: 12
+DBG-COLL> rid: 1, bid: 0, eid: 0, i: 1
+DBG-COLL> rid: 1, bid: 1, eid: 0, i: 5
+DBG-COLL> rid: 1, bid: 2, eid: 0, i: 9
+DBG-COLL> rid: 1, bid: 3, eid: 0, i: 13
+DBG-COLL> rid: 2, bid: 0, eid: 0, i: 2
+DBG-COLL> rid: 2, bid: 1, eid: 0, i: 6
+DBG-COLL> rid: 2, bid: 2, eid: 0, i: 10
+DBG-COLL> rid: 2, bid: 3, eid: 0, i: 14
+DBG-COLL> rid: 3, bid: 0, eid: 0, i: 3
+DBG-COLL> rid: 3, bid: 1, eid: 0, i: 7
+DBG-COLL> rid: 3, bid: 2, eid: 0, i: 11
+DBG-COLL> rid: 3, bid: 3, eid: 0, i: 15
+test_dist_1d: PASS: 07.2 cyclic
+DBG-INIT> n: 16
+DBG-INIT> num_of_ranks: 4
+DBG-INIT> num_of_elems_per_block: 2
+DBG-INIT> num_of_blocks: 8
+DBG-INIT> num_of_elems_per_rank: 4
+ DBG-INIT> num_of_blocks_per_rank: 2
+DBG-DIST> rid: 0, bid: 0, eid: 0, i: 0
+DBG-DIST> rid: 0, bid: 0, eid: 1, i: 1
+DBG-DIST> rid: 1, bid: 0, eid: 0, i: 2
+DBG-DIST> rid: 1, bid: 0, eid: 1, i: 3
+DBG-DIST> rid: 2, bid: 0, eid: 0, i: 4
+DBG-DIST> rid: 2, bid: 0, eid: 1, i: 5
+DBG-DIST> rid: 3, bid: 0, eid: 0, i: 6
+DBG-DIST> rid: 3, bid: 0, eid: 1, i: 7
+DBG-DIST> rid: 0, bid: 1, eid: 0, i: 8
+DBG-DIST> rid: 0, bid: 1, eid: 1, i: 9
+DBG-DIST> rid: 1, bid: 1, eid: 0, i: 10
+DBG-DIST> rid: 1, bid: 1, eid: 1, i: 11
+DBG-DIST> rid: 2, bid: 1, eid: 0, i: 12
+DBG-DIST> rid: 2, bid: 1, eid: 1, i: 13
+DBG-DIST> rid: 3, bid: 1, eid: 0, i: 14
+DBG-DIST> rid: 3, bid: 1, eid: 1, i: 15
+DBG-DIST> rid: 0, bid: 0, eid: 0
+DBG-DIST> rid: 0, bid: 0, eid: 1
+DBG-DIST> rid: 1, bid: 0, eid: 0
+DBG-DIST> rid: 1, bid: 0, eid: 1
+DBG-DIST> rid: 2, bid: 0, eid: 0
+DBG-DIST> rid: 2, bid: 0, eid: 1
+DBG-DIST> rid: 3, bid: 0, eid: 0
+DBG-DIST> rid: 3, bid: 0, eid: 1
+DBG-DIST> rid: 0, bid: 1, eid: 0
+DBG-DIST> rid: 0, bid: 1, eid: 1
+DBG-DIST> rid: 1, bid: 1, eid: 0
+DBG-DIST> rid: 1, bid: 1, eid: 1
+DBG-DIST> rid: 2, bid: 1, eid: 0
+DBG-DIST> rid: 2, bid: 1, eid: 1
+DBG-DIST> rid: 3, bid: 1, eid: 0
+DBG-DIST> rid: 3, bid: 1, eid: 1
+DBG-COLL> rid: 0, bid: 0, eid: 0, i: 0
+DBG-COLL> rid: 0, bid: 0, eid: 1, i: 1
+DBG-COLL> rid: 1, bid: 0, eid: 0, i: 2
+DBG-COLL> rid: 1, bid: 0, eid: 1, i: 3
+DBG-COLL> rid: 2, bid: 0, eid: 0, i: 4
+DBG-COLL> rid: 2, bid: 0, eid: 1, i: 5
+DBG-COLL> rid: 3, bid: 0, eid: 0, i: 6
+DBG-COLL> rid: 3, bid: 0, eid: 1, i: 7
+DBG-COLL> rid: 0, bid: 1, eid: 0, i: 8
+DBG-COLL> rid: 0, bid: 1, eid: 1, i: 9
+DBG-COLL> rid: 1, bid: 1, eid: 0, i: 10
+DBG-COLL> rid: 1, bid: 1, eid: 1, i: 11
+DBG-COLL> rid: 2, bid: 1, eid: 0, i: 12
+DBG-COLL> rid: 2, bid: 1, eid: 1, i: 13
+DBG-COLL> rid: 3, bid: 1, eid: 0, i: 14
+DBG-COLL> rid: 3, bid: 1, eid: 1, i: 15
+test_dist_1d: PASS: 08.0 block-cyclic
+DBG-INIT> n: 16
+DBG-INIT> num_of_ranks: 4
+DBG-INIT> num_of_elems_per_block: 4
+DBG-INIT> num_of_blocks: 4
+DBG-INIT> num_of_elems_per_rank: 4
+ DBG-INIT> num_of_blocks_per_rank: 1
+DBG-DIST> rid: 0, bid: 0, eid: 0, i: 0
+DBG-DIST> rid: 0, bid: 0, eid: 1, i: 1
+DBG-DIST> rid: 0, bid: 0, eid: 2, i: 2
+DBG-DIST> rid: 0, bid: 0, eid: 3, i: 3
+DBG-DIST> rid: 1, bid: 0, eid: 0, i: 4
+DBG-DIST> rid: 1, bid: 0, eid: 1, i: 5
+DBG-DIST> rid: 1, bid: 0, eid: 2, i: 6
+DBG-DIST> rid: 1, bid: 0, eid: 3, i: 7
+DBG-DIST> rid: 2, bid: 0, eid: 0, i: 8
+DBG-DIST> rid: 2, bid: 0, eid: 1, i: 9
+DBG-DIST> rid: 2, bid: 0, eid: 2, i: 10
+DBG-DIST> rid: 2, bid: 0, eid: 3, i: 11
+DBG-DIST> rid: 3, bid: 0, eid: 0, i: 12
+DBG-DIST> rid: 3, bid: 0, eid: 1, i: 13
+DBG-DIST> rid: 3, bid: 0, eid: 2, i: 14
+DBG-DIST> rid: 3, bid: 0, eid: 3, i: 15
+DBG-DIST> rid: 0, bid: 0, eid: 0
+DBG-DIST> rid: 0, bid: 0, eid: 1
+DBG-DIST> rid: 0, bid: 0, eid: 2
+DBG-DIST> rid: 0, bid: 0, eid: 3
+DBG-DIST> rid: 1, bid: 0, eid: 0
+DBG-DIST> rid: 1, bid: 0, eid: 1
+DBG-DIST> rid: 1, bid: 0, eid: 2
+DBG-DIST> rid: 1, bid: 0, eid: 3
+DBG-DIST> rid: 2, bid: 0, eid: 0
+DBG-DIST> rid: 2, bid: 0, eid: 1
+DBG-DIST> rid: 2, bid: 0, eid: 2
+DBG-DIST> rid: 2, bid: 0, eid: 3
+DBG-DIST> rid: 3, bid: 0, eid: 0
+DBG-DIST> rid: 3, bid: 0, eid: 1
+DBG-DIST> rid: 3, bid: 0, eid: 2
+DBG-DIST> rid: 3, bid: 0, eid: 3
+DBG-COLL> rid: 0, bid: 0, eid: 0, i: 0
+DBG-COLL> rid: 0, bid: 0, eid: 1, i: 1
+DBG-COLL> rid: 0, bid: 0, eid: 2, i: 2
+DBG-COLL> rid: 0, bid: 0, eid: 3, i: 3
+DBG-COLL> rid: 1, bid: 0, eid: 0, i: 4
+DBG-COLL> rid: 1, bid: 0, eid: 1, i: 5
+DBG-COLL> rid: 1, bid: 0, eid: 2, i: 6
+DBG-COLL> rid: 1, bid: 0, eid: 3, i: 7
+DBG-COLL> rid: 2, bid: 0, eid: 0, i: 8
+DBG-COLL> rid: 2, bid: 0, eid: 1, i: 9
+DBG-COLL> rid: 2, bid: 0, eid: 2, i: 10
+DBG-COLL> rid: 2, bid: 0, eid: 3, i: 11
+DBG-COLL> rid: 3, bid: 0, eid: 0, i: 12
+DBG-COLL> rid: 3, bid: 0, eid: 1, i: 13
+DBG-COLL> rid: 3, bid: 0, eid: 2, i: 14
+DBG-COLL> rid: 3, bid: 0, eid: 3, i: 15
+test_dist_1d: PASS: 08.1 block
+DBG-INIT> n: 16
+DBG-INIT> num_of_ranks: 4
+DBG-INIT> num_of_elems_per_block: 1
+DBG-INIT> num_of_blocks: 16
+DBG-INIT> num_of_elems_per_rank: 4
+ DBG-INIT> num_of_blocks_per_rank: 4
+DBG-DIST> rid: 0, bid: 0, eid: 0, i: 0
+DBG-DIST> rid: 1, bid: 0, eid: 0, i: 1
+DBG-DIST> rid: 2, bid: 0, eid: 0, i: 2
+DBG-DIST> rid: 3, bid: 0, eid: 0, i: 3
+DBG-DIST> rid: 0, bid: 1, eid: 0, i: 4
+DBG-DIST> rid: 1, bid: 1, eid: 0, i: 5
+DBG-DIST> rid: 2, bid: 1, eid: 0, i: 6
+DBG-DIST> rid: 3, bid: 1, eid: 0, i: 7
+DBG-DIST> rid: 0, bid: 2, eid: 0, i: 8
+DBG-DIST> rid: 1, bid: 2, eid: 0, i: 9
+DBG-DIST> rid: 2, bid: 2, eid: 0, i: 10
+DBG-DIST> rid: 3, bid: 2, eid: 0, i: 11
+DBG-DIST> rid: 0, bid: 3, eid: 0, i: 12
+DBG-DIST> rid: 1, bid: 3, eid: 0, i: 13
+DBG-DIST> rid: 2, bid: 3, eid: 0, i: 14
+DBG-DIST> rid: 3, bid: 3, eid: 0, i: 15
+DBG-DIST> rid: 0, bid: 0, eid: 0
+DBG-DIST> rid: 1, bid: 0, eid: 0
+DBG-DIST> rid: 2, bid: 0, eid: 0
+DBG-DIST> rid: 3, bid: 0, eid: 0
+DBG-DIST> rid: 0, bid: 1, eid: 0
+DBG-DIST> rid: 1, bid: 1, eid: 0
+DBG-DIST> rid: 2, bid: 1, eid: 0
+DBG-DIST> rid: 3, bid: 1, eid: 0
+DBG-DIST> rid: 0, bid: 2, eid: 0
+DBG-DIST> rid: 1, bid: 2, eid: 0
+DBG-DIST> rid: 2, bid: 2, eid: 0
+DBG-DIST> rid: 3, bid: 2, eid: 0
+DBG-DIST> rid: 0, bid: 3, eid: 0
+DBG-DIST> rid: 1, bid: 3, eid: 0
+DBG-DIST> rid: 2, bid: 3, eid: 0
+DBG-DIST> rid: 3, bid: 3, eid: 0
+DBG-COLL> rid: 0, bid: 0, eid: 0, i: 0
+DBG-COLL> rid: 1, bid: 0, eid: 0, i: 1
+DBG-COLL> rid: 2, bid: 0, eid: 0, i: 2
+DBG-COLL> rid: 3, bid: 0, eid: 0, i: 3
+DBG-COLL> rid: 0, bid: 1, eid: 0, i: 4
+DBG-COLL> rid: 1, bid: 1, eid: 0, i: 5
+DBG-COLL> rid: 2, bid: 1, eid: 0, i: 6
+DBG-COLL> rid: 3, bid: 1, eid: 0, i: 7
+DBG-COLL> rid: 0, bid: 2, eid: 0, i: 8
+DBG-COLL> rid: 1, bid: 2, eid: 0, i: 9
+DBG-COLL> rid: 2, bid: 2, eid: 0, i: 10
+DBG-COLL> rid: 3, bid: 2, eid: 0, i: 11
+DBG-COLL> rid: 0, bid: 3, eid: 0, i: 12
+DBG-COLL> rid: 1, bid: 3, eid: 0, i: 13
+DBG-COLL> rid: 2, bid: 3, eid: 0, i: 14
+DBG-COLL> rid: 3, bid: 3, eid: 0, i: 15
+test_dist_1d: PASS: 08.2 cyclic
