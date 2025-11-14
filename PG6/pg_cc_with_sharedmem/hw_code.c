@@ -507,7 +507,7 @@ void student_gather( int root_tid, int num_threads,
       {
 	for(int src_tid = 0; src_tid < num_threads; src_tid++)
 	  {
-	    output_sequential[src_tid + root_tid*num_threads] = shared_memory[src_tid];
+	    output_sequential[src_tid + root_tid * num_threads] = shared_memory[src_tid];
 	  }
       }
     /*
@@ -623,7 +623,7 @@ void student_all_reduce( int num_threads,
     output_sequential[tid] = 0.0f;
     for(int src_tid = 0; src_tid < num_threads; src_tid++)
       {
-	output_sequential[tid] += shared_memory[src_tid];
+	      output_sequential[tid] += shared_memory[src_tid];
       }
 
     /*

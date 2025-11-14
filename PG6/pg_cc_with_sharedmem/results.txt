@@ -1,4 +1,4 @@
-Random Root TID: 0
+Random Root TID: 3
 Prob 01: test_broadcast: PASS
 Prob 02: test_reduction: PASS
 Prob 03: test_scatter: PASS
