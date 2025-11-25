@@ -355,9 +355,20 @@ void student_bcast(int root_rid, float *input_distributed, float *output_distrib
   /* Find out number of processes */
   MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
 
-  /*
-    STUDENT_TODO
-  */
+  /* Implement broadcast: root sends its value to everyone, others receive. */
+  if (rid == root_rid) { // root sending
+    for (int dest = 0; dest < num_ranks; ++dest) { // loop over destinations
+      if (dest == root_rid) { // sending to self
+        *output_distributed = *input_distributed; // copy locally
+      } 
+      else { // sending to others
+        MPI_Send(input_distributed, 1, MPI_FLOAT, dest, tag, MPI_COMM_WORLD); // send
+      }
+    }
+  } 
+  else { // non-root receiving
+    MPI_Recv(output_distributed, 1, MPI_FLOAT, root_rid, tag, MPI_COMM_WORLD, &status); // receive
+  }
 
 }
 
@@ -426,25 +437,24 @@ void test_broadcast(char *prob, int root_rid)
 
   if (rid == 0 )
     {
-
       float res = max_pair_wise_diff(num_ranks,
-				     output_sequential_test,
-				     output_sequential_reference);
+                                     output_sequential_test,
+                                     output_sequential_reference);
       printf("%s: test_broadcast: ",prob);
       if( res > 1e-6 )
-	{
-	  printf("FAIL\n");
+        {
+          printf("FAIL\n");
 
-	  print_float_mem("     in_seq", num_ranks, input_sequential);
-	  print_float_mem("out_seq_tst", num_ranks, output_sequential_test);
-	  print_float_mem("out_seq_ref", num_ranks, output_sequential_reference);
+          print_float_mem("     in_seq", num_ranks, input_sequential);
+          print_float_mem("out_seq_tst", num_ranks, output_sequential_test);
+          print_float_mem("out_seq_ref", num_ranks, output_sequential_reference);
 
-	  printf("\n");
-	}
+          printf("\n");
+        }
       else
-	{
-	  printf("PASS\n");
-	}
+        {
+          printf("PASS\n");
+        }
     }
 
   
@@ -495,9 +505,20 @@ void student_reduction( int root_rid,
   /* Find out number of processes */
   MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
 
-  /*
-    STUDENT_TODO
-  */
+  /* Reduction implemented with root receiving all contributions and summing */
+  if (rid == root_rid) { // root receiving
+    float sum = *src_distributed; // start with own value
+    for (int s = 0; s < num_ranks; ++s) { // loop over senders
+      if (s == root_rid) continue; // skip self
+      float tmp = 0.0f; // temp storage
+      MPI_Recv(&tmp, 1, MPI_FLOAT, s, tag, MPI_COMM_WORLD, &status); // receive
+      sum += tmp; // accumulate
+    }
+    *output_distributed = sum; // store result
+  } 
+  else { // non-root sending
+    MPI_Send(src_distributed, 1, MPI_FLOAT, root_rid, tag, MPI_COMM_WORLD); // send
+  }
 
 }
 
@@ -601,9 +622,20 @@ void student_scatter(int root_rid, float *src, float *dst)
   /* Find out number of processes */
   MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
 
-  /*
-    STUDENT_TODO
-  */
+  /* Scatter: root sends src[dest] to each dest; others receive */
+  if (rid == root_rid) { // root sending
+    for (int dest = 0; dest < num_ranks; ++dest) { // loop over destinations
+      if (dest == root_rid) { // sending to self
+        *dst = src[dest]; // copy locally
+      } 
+      else { // sending to others
+        MPI_Send(&src[dest], 1, MPI_FLOAT, dest, tag, MPI_COMM_WORLD); // send
+      }
+    }
+  }
+  else { // non-root receiving
+      MPI_Recv(dst, 1, MPI_FLOAT, root_rid, tag, MPI_COMM_WORLD, &status); // receive
+  }
 
 }
 
@@ -746,9 +778,21 @@ void student_gather( int root_rid,
   /* Find out number of processes */
   MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
 
-  /*
-    STUDENT_TODO
-  */
+  /* Gather: root receives one scalar from each rank and places it into
+     output_distributed[src] at index src; non-root ranks send their scalar. */
+  if (rid == root_rid) { // root receiving
+    output_distributed[rid] = *src_distributed; // store own value
+    for (int s = 0; s < num_ranks; ++s) { // loop over senders
+      if (s == root_rid) continue; // skip self
+      float tmp = 0.0f; // temp storage
+      MPI_Recv(&tmp, 1, MPI_FLOAT, s, tag, MPI_COMM_WORLD, &status); // receive
+      output_distributed[s] = tmp; // store received value
+    }
+  } 
+  else { // non-root sending
+    MPI_Send(src_distributed, 1, MPI_FLOAT, root_rid, tag, MPI_COMM_WORLD); // send
+    // non-roots leave their output_distributed untouched
+  }
 
 }
 
@@ -881,9 +925,26 @@ void student_all_reduce(float *input_distributed,
   /* Find out number of processes */
   MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
 
-  /*
-    STUDENT_TODO
-  */
+  /* Implement all-reduce by reducing at root 0 then broadcasting the result */
+  int root = 0; // define root
+  if (rid == root) { // root
+    float sum = *input_distributed; // start with own value
+    for (int s = 0; s < num_ranks; ++s) { // loop over senders
+      if (s == root) continue;
+      float tmp = 0.0f; // temp storage
+      MPI_Recv(&tmp, 1, MPI_FLOAT, s, tag, MPI_COMM_WORLD, &status); // receive
+      sum += tmp; // accumulate
+    }
+    // send sum to everyone
+    for (int d = 0; d < num_ranks; ++d) { // loop over destinations
+      if (d == root) *output_distributed = sum; // copy locally
+      else MPI_Send(&sum, 1, MPI_FLOAT, d, tag, MPI_COMM_WORLD); // send
+    }
+  } 
+  else { // non-root
+    MPI_Send(input_distributed, 1, MPI_FLOAT, root, tag, MPI_COMM_WORLD); // send
+    MPI_Recv(output_distributed, 1, MPI_FLOAT, root, tag, MPI_COMM_WORLD, &status); // receive
+  }
 }
 
 
@@ -1009,9 +1070,27 @@ void student_all_gather( float *src_distributed,
   /* Find out number of processes */
   MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
 
-  /*
-    STUDENT_TODO
-  */
+  /* Implement all-gather by having root(0) collect all values then distribute the full array */
+  int root = 0; // define root
+  if (rid == root) { // root
+    float *buf = (float *)malloc(sizeof(float) * num_ranks); // buffer to hold all values
+    buf[rid] = *src_distributed; // store own value
+    for (int s = 0; s < num_ranks; ++s) { // loop over senders
+      if (s == root) continue; // skip self
+      MPI_Recv(&buf[s], 1, MPI_FLOAT, s, tag, MPI_COMM_WORLD, &status); // receive
+    }
+    // copy to our output and send to others
+    for (int i = 0; i < num_ranks; ++i) output_distributed[i] = buf[i]; // copy to own output
+    for (int d = 0; d < num_ranks; ++d) { // loop over destinations
+      if (d == root) continue; // skip self
+      MPI_Send(buf, num_ranks, MPI_FLOAT, d, tag, MPI_COMM_WORLD); // send
+    }
+    free(buf); // free buffer
+  } 
+  else { // non-root
+    MPI_Send(src_distributed, 1, MPI_FLOAT, root, tag, MPI_COMM_WORLD); // send value to root
+    MPI_Recv(output_distributed, num_ranks, MPI_FLOAT, root, tag, MPI_COMM_WORLD, &status); // receive
+  }
 }
 
 void test_all_gather(char *prob, int root_rid)
@@ -1138,9 +1217,18 @@ void student_all_to_all( float *src_distributed,
   /* Find out number of processes */
   MPI_Comm_size(MPI_COMM_WORLD, &num_ranks);
 
-  /*
-    STUDENT_TODO
-  */
+  /* Implement all-to-all by having each rank send its value to every other rank */
+  for (int peer = 0; peer < num_ranks; ++peer) { // loop over peers
+    if (peer == rid) { // sending to self
+      output_distributed[peer] = src_distributed[peer]; // copy locally
+    } 
+    else { // sending to others
+      float sendv = src_distributed[peer]; // value to send
+      float recvv = 0.0f; // value to receive
+      MPI_Sendrecv(&sendv, 1, MPI_FLOAT, peer, tag, &recvv, 1, MPI_FLOAT, peer, tag, MPI_COMM_WORLD, &status); // send and receive
+      output_distributed[peer] = recvv; // store received value
+    }
+  }
 }
 
 
