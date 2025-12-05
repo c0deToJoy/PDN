@@ -1,0 +1,42 @@
+In this assignment you will step through incrementally into the construction of a standard algorithm for a high-performance implementation of matrix-times-matrix multiplication. Between each iteration you will identify the change in the code and how it connects to a change in performance. You will submit a pdf of your writeup. (If you work with others for ideation then note that at the top of your document.)
+
+Iterations:
+2.  tuned_variant00_op.c
+3.  tuned_variant000_index_set_split.c (iteration 4 more directly descends from iteration 2, but this is a clean implementation of handling the fringe cases that iteration 4,5 and 6 handle.)
+4.  tuned_variant01_op.c
+5.  tuned_variant02_op.c
+6.  tuned_variant03_op_block_mc.c
+7.  tuned_variant04_op_block_nr.c
+8.  tuned_variant05_op_block_mr.c
+9.  tuned_variant05_op_block_micro_kernel.c
+10. tuned_variant06_op_pack_dlt_B.c
+11. tuned_variant07_op_pack_dlt_A.c
+12. tuned_variant08_op_zero_pack_remove_k_fringe.c
+13. tuned_variant09_op_minimize_m_fringe.c
+14. tuned_variant10_op_minimize_n_fringe.c
+15. tuned_variant11_op_minimize_kc_zerowork.c
+16. tuned_variant12_op_kunroll_with_overrun_for_ilp.c
+17. tuned_variant13_op_mr_ilp.c
+18. tuned_variant14_op_nr_ilp.c
+19. tuned_variant15_op_presimd_data_dist_elem.c
+20. tuned_variant16_op_presimd_data_dist_elem_cleaner.c
+21. tuned_variant17_op_pseudo_simd.c
+22. tuned_variant18_op_avx2_simd.c
+23. tuned_variant19_op_data_dist_1d_sharedmem.c
+24. tuned_variant20_op_2d_sharedmem.c
+
+
+Main Questions:
+Between each iteration of the operation do and answer the following:
+- What changed between this and previous iteration ('diff file1 file2' is your friend)? [Describe the change. You may include a code snippet.]
+- What was the change in performance? (run the code) [Plot containing this and at least the previous iteration. Can resuse plots, but they should not be crowded.]
+"./plotter_multi.py "Plot title" "outputfile.png" results1.csv results2.csv ...."
+- Why do you think that happened?  [Brief statement of what you think it could be and how you could test that idea]
+
+
+Notes:
+You can modify the Makefile, build scripts, testing scripts, sbatch files as needed. These experiments can take a long time to run on schooner, so I recommend you break the experiments up in batches. If you run each experiment in its own sbatch this will go very quickly. You can also use your VM, the GPELs or your local machine for experiments.
+
+
+Note, for shared memory runs you need to set the environment variable "export OMP_NUM_THREADS=..." to a number of threads that is equal to or greater than the number of ROW threads multiplied by the number of COL threads.
+
