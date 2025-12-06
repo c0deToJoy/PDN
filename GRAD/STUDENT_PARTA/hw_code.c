@@ -110,27 +110,27 @@ void student_coo_matrix_to_csr_matrix( coo_matrix_t *coo_src,
     //       counters for each row.
 
     // PASS 1: figure out the number of non-zeros in each row
-    for( int nnz_idx = 0; nnz_idx < coo_src->nnz; ++nnz_idx )
+    for( int nnz_idx = 0; nnz_idx < coo_src->nnz; ++nnz_idx ) // Loop through all non-zeros
     {
-        int row = coo_src->row_idx[nnz_idx];
-        csr_dst->row_idx[row+1] += 1;
+        int row = coo_src->row_idx[nnz_idx]; // Get the row index of the current non-zero
+        csr_dst->row_idx[row+1] += 1; // Increment the count of non-zeros in that row
     }
     // Cumulative sum to get the row_ptr
-    for( int row = 0; row < csr_dst->m; ++row )
+    for( int row = 0; row < csr_dst->m; ++row ) // Loop through each row
     {
-      csr_dst->row_idx[row+1] += csr_dst->row_idx[row];
+      csr_dst->row_idx[row+1] += csr_dst->row_idx[row]; // Update to cumulative sum
     }
     // PASS 2: place the col_idx and values in the right location
-    int *current_pos = (int *)calloc(csr_dst->m, sizeof(int));
-    for( int nnz_idx = 0; nnz_idx < coo_src->nnz; ++nnz_idx )
+    int *current_pos = (int *)calloc(csr_dst->m, sizeof(int)); // Array to track current position in each row
+    for( int nnz_idx = 0; nnz_idx < coo_src->nnz; ++nnz_idx ) // Loop through all non-zeros again
     {
-        int row = coo_src->row_idx[nnz_idx];
-        int next_pos = csr_dst->row_idx[row] + current_pos[row];
-        csr_dst->col_idx[next_pos] = coo_src->col_idx[nnz_idx];
-        csr_dst->values[next_pos]  = coo_src->values[nnz_idx];
-        current_pos[row] += 1;
+        int row = coo_src->row_idx[nnz_idx]; // Get the row index of the current non-zero
+        int next_pos = csr_dst->row_idx[row] + current_pos[row]; // Calculate the position to insert
+        csr_dst->col_idx[next_pos] = coo_src->col_idx[nnz_idx]; // Set the column index
+        csr_dst->values[next_pos]  = coo_src->values[nnz_idx]; // Set the value
+        current_pos[row] += 1; // Increment the current position for that row
     }
-    free(current_pos);
+    free(current_pos); // Free the temporary position array
   }
 }
 
@@ -230,31 +230,31 @@ void student_coo_matrix_to_bcsr_matrix( int mb, int nb,
     //                     for each row block.
     
     // PASS 1: Count the number of non-zero blocks
-    int num_block_rows = (bcsr_dst->m) / mb;
-    int num_block_cols = (bcsr_dst->n) / nb;
+    int num_block_rows = (bcsr_dst->m) / mb; // Initialize number of block rows to number of rows divided by block size
+    int num_block_cols = (bcsr_dst->n) / nb; // Initialize number of block cols to number of cols divided by block size
     
-    int *block_has_nnz = (int *)calloc(num_block_rows * num_block_cols, sizeof(int));
+    int *block_has_nnz = (int *)calloc(num_block_rows * num_block_cols, sizeof(int)); // Track non-zero blocks
     
-    for( int nnz_idx = 0; nnz_idx < coo_src->nnz; ++nnz_idx )
+    for( int nnz_idx = 0; nnz_idx < coo_src->nnz; ++nnz_idx ) // Loop through all non-zeros
     {
-        int row = coo_src->row_idx[nnz_idx];
-        int col = coo_src->col_idx[nnz_idx];
+        int row = coo_src->row_idx[nnz_idx]; // Get the row index of the current non-zero
+        int col = coo_src->col_idx[nnz_idx]; // Get the column index of the current non-zero
         
-        int block_row = row / mb;
-        int block_col = col / nb;
-        int block_id = block_row * num_block_cols + block_col;
+        int block_row = row / mb; // Determine the block row
+        int block_col = col / nb; // Determine the block column
+        int block_id = block_row * num_block_cols + block_col; // Calculate the block ID
         
-        block_has_nnz[block_id] = 1;
+        block_has_nnz[block_id] = 1; // Mark this block as having a non-zero
     }
     
-    int nnz_blocks = 0;
-    for( int i = 0; i < num_block_rows * num_block_cols; ++i )
+    int nnz_blocks = 0; // Initialize non-zero block count
+    for( int i = 0; i < num_block_rows * num_block_cols; ++i ) // Loop through all blocks
     {
-        if( block_has_nnz[i] )
-            nnz_blocks++;
+        if( block_has_nnz[i] ) // If the block has a non-zero
+            nnz_blocks++; // Increment the non-zero block count
     }
     
-    bcsr_dst->nnz_blocks = nnz_blocks;
+    bcsr_dst->nnz_blocks = nnz_blocks; // Set the total number of non-zero blocks!!
     
     // Initialize the buffers
     // For the sake of the HW we will fill the unitialized values with zeros
@@ -267,76 +267,74 @@ void student_coo_matrix_to_bcsr_matrix( int mb, int nb,
 
     // PASS 2: find out how many non-zero blocks are in each block row and modify
     //         bcsr_dst->block_row_idx
-    int *blocks_per_row = (int *)calloc(num_block_rows, sizeof(int));
+    int *blocks_per_row = (int *)calloc(num_block_rows, sizeof(int)); // Track number of blocks per row
     
-    for( int block_row = 0; block_row < num_block_rows; ++block_row )
+    for( int block_row = 0; block_row < num_block_rows; ++block_row ) // Loop through all block rows
     {
-        for( int block_col = 0; block_col < num_block_cols; ++block_col )
+        for( int block_col = 0; block_col < num_block_cols; ++block_col ) // Loop through all block columns
         {
-            int block_id = block_row * num_block_cols + block_col;
-            if( block_has_nnz[block_id] )
-                blocks_per_row[block_row]++;
+            int block_id = block_row * num_block_cols + block_col; // Calculate the block ID
+            if( block_has_nnz[block_id] ) // If the block has a non-zero
+                blocks_per_row[block_row]++; // Increment the count of blocks in that row
         }
     }
     
-    bcsr_dst->block_row_idx[0] = 0;
-    for( int block_row = 0; block_row < num_block_rows; ++block_row )
+    bcsr_dst->block_row_idx[0] = 0; // First entry is always 0
+    for( int block_row = 0; block_row < num_block_rows; ++block_row ) // Loop through all block rows
     {
-        bcsr_dst->block_row_idx[block_row+1] = bcsr_dst->block_row_idx[block_row] + blocks_per_row[block_row];
+        bcsr_dst->block_row_idx[block_row+1] = bcsr_dst->block_row_idx[block_row] + blocks_per_row[block_row]; // Cumulative sum of blocks per row
     }
 
     // PASS 3: Place the coo values into their right location in the bcsr matrix
-    int *current_block_count = (int *)calloc(num_block_rows, sizeof(int));
+    int *current_block_count = (int *)calloc(num_block_rows, sizeof(int)); // Track current block count per row
     
-    for( int block_row = 0; block_row < num_block_rows; ++block_row )
+    for( int block_row = 0; block_row < num_block_rows; ++block_row ) // Loop through all block rows
     {
-        for( int block_col = 0; block_col < num_block_cols; ++block_col )
+        for( int block_col = 0; block_col < num_block_cols; ++block_col ) // Loop through all block columns
         {
-            int block_id = block_row * num_block_cols + block_col;
-            if( block_has_nnz[block_id] )
+            int block_id = block_row * num_block_cols + block_col; // Calculate the block ID
+            if( block_has_nnz[block_id] ) // If the block has a non-zero
             {
-                int block_idx = bcsr_dst->block_row_idx[block_row] + current_block_count[block_row];
-                bcsr_dst->block_col_idx[block_idx] = block_col * nb;
-                current_block_count[block_row]++;
+                int block_idx = bcsr_dst->block_row_idx[block_row] + current_block_count[block_row]; // Calculate the block index
+                bcsr_dst->block_col_idx[block_idx] = block_col * nb; // Set the block column index
+                current_block_count[block_row]++; // Increment the current block count for that row
             }
         }
     }
     
-    for( int nnz_idx = 0; nnz_idx < coo_src->nnz; ++nnz_idx )
+    for( int nnz_idx = 0; nnz_idx < coo_src->nnz; ++nnz_idx ) // Loop through all non-zeros
     {
-        int row = coo_src->row_idx[nnz_idx];
-        int col = coo_src->col_idx[nnz_idx];
-        float val = coo_src->values[nnz_idx];
+        int row = coo_src->row_idx[nnz_idx]; // Get the row index of the current non-zero
+        int col = coo_src->col_idx[nnz_idx]; // Get the column index of the current non-zero
+        float val = coo_src->values[nnz_idx]; // Get the value of the current non-zero
         
-        int block_row = row / mb;
-        int block_col = col / nb;
-        int in_block_row = row % mb;
-        int in_block_col = col % nb;
+        int block_row = row / mb; // Calculate the block row
+        int block_col = col / nb; // Calculate the block column
+        int in_block_row = row % mb; // Calculate the in-block row
+        int in_block_col = col % nb; // Calculate the in-block column
         
-        int block_start = bcsr_dst->block_row_idx[block_row];
-        int block_end = bcsr_dst->block_row_idx[block_row+1];
-        int block_pos = -1;
+        int block_start = bcsr_dst->block_row_idx[block_row]; // Start index of the block row
+        int block_end = bcsr_dst->block_row_idx[block_row+1]; // End index of the block row
+        int block_pos = -1; // Initialize block position
         
-        for( int i = block_start; i < block_end; ++i )
+        for( int i = block_start; i < block_end; ++i ) // Loop through the blocks in the block row
         {
-            if( bcsr_dst->block_col_idx[i] == block_col * nb )
+            if( bcsr_dst->block_col_idx[i] == block_col * nb ) // If the block column matches
             {
-                block_pos = i;
+                block_pos = i; // Set the block position
                 break;
             }
         }
         
-        if( block_pos >= 0 )
+        if( block_pos >= 0 ) // If a valid block position was found
         {
-            int block_idx = block_pos * mb * nb;
-            bcsr_dst->block_values[block_idx + in_block_row * bcs + in_block_col * brs] = val;
+            int block_idx = block_pos * mb * nb; // Calculate the starting index of the block in the values array
+            bcsr_dst->block_values[block_idx + in_block_row * bcs + in_block_col * brs] = val; // Set the value in the block
         }
     }
-    
-    free(block_has_nnz);
-    free(blocks_per_row);
-    free(current_block_count);
-
+    free(block_has_nnz); // Free the memory allocated for block_has_nnz
+    free(blocks_per_row); // Free the memory allocated for blocks_per_row
+    free(current_block_count); // Free the memory allocated for current_block_count
   }
 }
 
@@ -434,30 +432,31 @@ void student_csr_matrix_to_csc_matrix( csr_matrix_t *csr_src,
     // Most important hint you will receive: draw this out on paper first.
 
     // PASS 1: figure out the number of non-zeros in each column
-    for( int nnz_idx = 0; nnz_idx < csr_src->nnz; ++nnz_idx )
+    for( int nnz_idx = 0; nnz_idx < csr_src->nnz; ++nnz_idx ) // Loop through all non-zeros
     {
-        int col = csr_src->col_idx[nnz_idx];
-        csc_dst->col_idx[col+1] += 1;
+        int col = csr_src->col_idx[nnz_idx]; // Get the column index of the current non-zero
+        csc_dst->col_idx[col+1] += 1; // Increment the count of non-zeros in that column
     }
     // Cumulative sum to get the col_ptr
-    for( int col = 0; col < csc_dst->n; ++col )
+    for( int col = 0; col < csc_dst->n; ++col ) // Loop through each column
     {
-      csc_dst->col_idx[col+1] += csc_dst->col_idx[col];
+      csc_dst->col_idx[col+1] += csc_dst->col_idx[col]; // Update to cumulative sum
     }
+
     // PASS 2: place the row_idx and values in the right location
-    int *current_pos = (int *)calloc(csc_dst->n, sizeof(int));
-    for( int row = 0; row < csr_src->m; ++row )
+    int *current_pos = (int *)calloc(csc_dst->n, sizeof(int)); // Array to track current position in each column
+    for( int row = 0; row < csr_src->m; ++row ) // Loop through each row
     {
-        for( int idx = csr_src->row_idx[row]; idx < csr_src->row_idx[row+1]; ++idx )
+        for( int idx = csr_src->row_idx[row]; idx < csr_src->row_idx[row+1]; ++idx ) // Loop through non-zeros in that row
         {
-            int col = csr_src->col_idx[idx];
-            int next_pos = csc_dst->col_idx[col] + current_pos[col];
-            csc_dst->row_idx[next_pos] = row;
-            csc_dst->values[next_pos]  = csr_src->values[idx];
-            current_pos[col] += 1;
+            int col = csr_src->col_idx[idx]; // Get the column index of the current non-zero
+            int next_pos = csc_dst->col_idx[col] + current_pos[col]; // Calculate the position to insert
+            csc_dst->row_idx[next_pos] = row; // Set the row index
+            csc_dst->values[next_pos]  = csr_src->values[idx]; // Set the value
+            current_pos[col] += 1; // Increment the current position for that column
         }
     }
-    free(current_pos);
+    free(current_pos); // Free the temporary position array
   }
 }
 
