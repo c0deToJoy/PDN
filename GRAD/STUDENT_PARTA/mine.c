@@ -228,33 +228,10 @@ void student_coo_matrix_to_bcsr_matrix( int mb, int nb,
     //             PASS 3: place the appropriate values in block_col_idx
     //                     and block_values. You will need to keep a counter
     //                     for each row block.
-    
-    // PASS 1: Count the number of non-zero blocks
-    int num_block_rows = (bcsr_dst->m) / mb;
-    int num_block_cols = (bcsr_dst->n) / nb;
-    
-    int *block_has_nnz = (int *)calloc(num_block_rows * num_block_cols, sizeof(int));
-    
-    for( int nnz_idx = 0; nnz_idx < coo_src->nnz; ++nnz_idx )
-    {
-        int row = coo_src->row_idx[nnz_idx];
-        int col = coo_src->col_idx[nnz_idx];
-        
-        int block_row = row / mb;
-        int block_col = col / nb;
-        int block_id = block_row * num_block_cols + block_col;
-        
-        block_has_nnz[block_id] = 1;
-    }
-    
-    int nnz_blocks = 0;
-    for( int i = 0; i < num_block_rows * num_block_cols; ++i )
-    {
-        if( block_has_nnz[i] )
-            nnz_blocks++;
-    }
-    
-    bcsr_dst->nnz_blocks = nnz_blocks;
+
+
+    // PASS 1: ...
+    // bcsr_dst->nnz_blocks = ??;
     
     // Initialize the buffers
     // For the sake of the HW we will fill the unitialized values with zeros
@@ -267,76 +244,8 @@ void student_coo_matrix_to_bcsr_matrix( int mb, int nb,
 
     // PASS 2: find out how many non-zero blocks are in each block row and modify
     //         bcsr_dst->block_row_idx
-    int *blocks_per_row = (int *)calloc(num_block_rows, sizeof(int));
-    
-    for( int block_row = 0; block_row < num_block_rows; ++block_row )
-    {
-        for( int block_col = 0; block_col < num_block_cols; ++block_col )
-        {
-            int block_id = block_row * num_block_cols + block_col;
-            if( block_has_nnz[block_id] )
-                blocks_per_row[block_row]++;
-        }
-    }
-    
-    bcsr_dst->block_row_idx[0] = 0;
-    for( int block_row = 0; block_row < num_block_rows; ++block_row )
-    {
-        bcsr_dst->block_row_idx[block_row+1] = bcsr_dst->block_row_idx[block_row] + blocks_per_row[block_row];
-    }
 
     // PASS 3: Place the coo values into their right location in the bcsr matrix
-    int *current_block_count = (int *)calloc(num_block_rows, sizeof(int));
-    
-    for( int block_row = 0; block_row < num_block_rows; ++block_row )
-    {
-        for( int block_col = 0; block_col < num_block_cols; ++block_col )
-        {
-            int block_id = block_row * num_block_cols + block_col;
-            if( block_has_nnz[block_id] )
-            {
-                int block_idx = bcsr_dst->block_row_idx[block_row] + current_block_count[block_row];
-                bcsr_dst->block_col_idx[block_idx] = block_col * nb;
-                current_block_count[block_row]++;
-            }
-        }
-    }
-    
-    for( int nnz_idx = 0; nnz_idx < coo_src->nnz; ++nnz_idx )
-    {
-        int row = coo_src->row_idx[nnz_idx];
-        int col = coo_src->col_idx[nnz_idx];
-        float val = coo_src->values[nnz_idx];
-        
-        int block_row = row / mb;
-        int block_col = col / nb;
-        int in_block_row = row % mb;
-        int in_block_col = col % nb;
-        
-        int block_start = bcsr_dst->block_row_idx[block_row];
-        int block_end = bcsr_dst->block_row_idx[block_row+1];
-        int block_pos = -1;
-        
-        for( int i = block_start; i < block_end; ++i )
-        {
-            if( bcsr_dst->block_col_idx[i] == block_col * nb )
-            {
-                block_pos = i;
-                break;
-            }
-        }
-        
-        if( block_pos >= 0 )
-        {
-            int block_idx = block_pos * mb * nb;
-            bcsr_dst->block_values[block_idx + in_block_row * bcs + in_block_col * brs] = val;
-        }
-    }
-    
-    free(block_has_nnz);
-    free(blocks_per_row);
-    free(current_block_count);
-
   }
 }
 
