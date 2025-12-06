@@ -426,11 +426,13 @@ void student_dense_matvec_dot_product_2D_parallelism( dense_matrix_t *A,
 	     - Only use locks for your mutal exclusion.
 	     
 	  */
-	     // int i = tid_i*mb + ii;
-	     // int j = tid_j*nb + ji;
+	     int i = tid_i*mb + ii;
+	     int j = tid_j*nb + ji;
 
-	     // y[i] += A->values[i*cs+j*rs]*x[j];
+	     y[i] += A->values[i*cs+j*rs]*x[j];
 
+      //Nothing to modify? Passes without locks.
+      
 	  /* 
 	     End of STUDENT_TODO
 	  */
@@ -466,27 +468,27 @@ void student_coo_matvec( dense_matrix_t *A,
     omp_init_lock(&y_locks[i]);
 
   #pragma omp parallel for default(none) \
-    shared(A_coo,y_locks /* STUDENT_TODO you may need to modify this */)	\
-        /* private() STUDENT_TODO you may need to modify this */
+  shared(A_coo,y_locks,x,y ) /*Add x and y to shared since they are used inside*/ \
+        /* private() STUDENT_TODO you may need to modify this */ //Unnecessary since no private vars needed
   for(int cur_pos = 0; cur_pos < A_coo->nnz; ++cur_pos )
     {
       /* 
-	 Start of STUDENT_TODO 
-	     
-	 - Only modify the code between these boundaries.
-	 - Only use locks for your mutal exclusion.
+        Start of STUDENT_TODO 
+            
+        - Only modify the code between these boundaries.
+        - Only use locks for your mutal exclusion.
       */
 
-      /*
-	int i   = A_coo->row_idx[cur_pos];
-	int j   = A_coo->col_idx[cur_pos];
-	int val = A_coo->values[cur_pos];
+        int i   = A_coo->row_idx[cur_pos];
+        int j   = A_coo->col_idx[cur_pos];
+        float val = A_coo->values[cur_pos];
 
-	y[i] += val * x[j];
-      */
+        omp_set_lock(&y_locks[i]); // Lock the row
+        y[i] += val * x[j];
+        omp_unset_lock(&y_locks[i]); // Unlock the row
 
       /* 
-	 End of STUDENT_TODO
+	      End of STUDENT_TODO
       */
     }
 
@@ -520,7 +522,7 @@ void student_csc_matvec( dense_matrix_t *A,
     omp_init_lock(&y_locks[i]);
 
   #pragma omp parallel for default(none) \
-    shared(A_csc,y_locks /* STUDENT_TODO you may need to modify this */)	\
+  shared(A_csc,y_locks,x,y)	\
         /* private() STUDENT_TODO you may need to modify this */
   for(int j = 0; j< A_csc->n; ++j )
     for(int cur_nz = A_csc->col_idx[j];
@@ -533,12 +535,14 @@ void student_csc_matvec( dense_matrix_t *A,
 	   - Only modify the code between these boundaries.
 	   - Only use locks for your mutal exclusion.
 	*/
-	/*
+
 	  int i     = A_csc->row_idx[cur_nz];
 	  float val = A_csc->values[cur_nz];
 	
+	  omp_set_lock(&y_locks[i]); // Lock the row
 	  y[i] += val * x[j];
-	*/
+	  omp_unset_lock(&y_locks[i]); // Unlock the row
+
 	/* 
 	   End of STUDENT_TODO
 	*/	
@@ -573,7 +577,7 @@ void student_csr_matvec( dense_matrix_t *A,
     omp_init_lock(&y_locks[i]);
 
   #pragma omp parallel for default(none) \
-    shared(A_csr,y_locks /* STUDENT_TODO you may need to modify this */)	\
+    shared(A_csr,y_locks,x,y)	\
         /* private() STUDENT_TODO you may need to modify this */
   for(int i = 0; i < A_csr->m; ++i )
     for(int cur_nz = A_csr->row_idx[i];
@@ -586,16 +590,18 @@ void student_csr_matvec( dense_matrix_t *A,
 	   - Only modify the code between these boundaries.
 	   - Only use locks for your mutal exclusion.
 	*/
-	/*
+  
 	  int j     = A_csr->col_idx[cur_nz];
 	  float val = A_csr->values[cur_nz];
 
+	  omp_set_lock(&y_locks[i]); // Lock the row
 	  y[i] += val * x[j];
-	*/
+	  omp_unset_lock(&y_locks[i]); // Unlock the row
+  
 	/* 
 	   End of STUDENT_TODO
 	*/	
-      }
+    }
 
   // Free the locks
   for(int i = 0; i < m; ++i )
@@ -635,7 +641,7 @@ void student_bcsr_matvec( dense_matrix_t *A,
     omp_init_lock(&y_locks[i]);
 
   #pragma omp parallel for default(none) \
-    shared(A_bcsr,y_locks,m,n,mb,nb /* STUDENT_TODO you may need to modify this */) \
+    shared(A_bcsr,y_locks,m,n,mb,nb,x,y,bcs,brs) \
         /* private() STUDENT_TODO you may need to modify this */
   for(int io = 0;
       io < m;
@@ -659,13 +665,14 @@ void student_bcsr_matvec( dense_matrix_t *A,
 		   - Only use locks for your mutal exclusion.
 		*/
 
-		/*
+
 		int i = ii+io;
 		int j = jj+jo;
 		float val = block_val[ii*bcs+jj*brs];
 		
+		omp_set_lock(&y_locks[i]); // Lock the row
 		y[i] += val * x[j];
-		*/
+		omp_unset_lock(&y_locks[i]); // Unlock the row
 		
 		/* 
 		   End of STUDENT_TODO
