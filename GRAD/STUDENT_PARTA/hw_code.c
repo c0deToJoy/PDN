@@ -100,7 +100,6 @@ void student_coo_matrix_to_csr_matrix( coo_matrix_t *coo_src,
   csr_dst->values  = (float *)calloc(csr_dst->nnz,sizeof(float));
   
   {
-    
     // STUDENT_TODO: Do not convert to a dense matrix then back to csr.
 
     // Most important hint you will receive: draw this out on paper first.
@@ -109,6 +108,29 @@ void student_coo_matrix_to_csr_matrix( coo_matrix_t *coo_src,
     //       then take a second pass to place the col_idx and values
     //       in the right location. You will need to keep an extra set of
     //       counters for each row.
+
+    // PASS 1: figure out the number of non-zeros in each row
+    for( int nnz_idx = 0; nnz_idx < coo_src->nnz; ++nnz_idx )
+    {
+        int row = coo_src->row_idx[nnz_idx];
+        csr_dst->row_idx[row+1] += 1;
+    }
+    // Cumulative sum to get the row_ptr
+    for( int row = 0; row < csr_dst->m; ++row )
+    {
+      csr_dst->row_idx[row+1] += csr_dst->row_idx[row];
+    }
+    // PASS 2: place the col_idx and values in the right location
+    int *current_pos = (int *)calloc(csr_dst->m, sizeof(int));
+    for( int nnz_idx = 0; nnz_idx < coo_src->nnz; ++nnz_idx )
+    {
+        int row = coo_src->row_idx[nnz_idx];
+        int next_pos = csr_dst->row_idx[row] + current_pos[row];
+        csr_dst->col_idx[next_pos] = coo_src->col_idx[nnz_idx];
+        csr_dst->values[next_pos]  = coo_src->values[nnz_idx];
+        current_pos[row] += 1;
+    }
+    free(current_pos);
   }
 }
 

@@ -9,8 +9,8 @@ CFLAGS= -std=c99 -g -O2 -fopenmp
 run-valgrind-local: build-local
 	valgrind --leak-check=full --show-leak-kinds=all ./run-hw.x
 
-#run-local: build-local
-#	./run-hw.x
+run-local: build-local
+	./run-hw.x
 
 
 build-local: hw_code.c sparse.c
