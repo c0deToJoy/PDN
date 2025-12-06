@@ -423,8 +423,8 @@ void student_csr_matrix_to_csc_matrix( csr_matrix_t *csr_src,
 
   // Initialize the buffers
   // For the sake of the HW we will fill the unitialized values with zeros
-  csc_dst->row_idx = (int *)calloc((csc_dst->m+1),sizeof(int));
-  csc_dst->col_idx = (int *)calloc(csc_dst->nnz,sizeof(int));
+  csc_dst->col_idx = (int *)calloc((csc_dst->n+1),sizeof(int));
+  csc_dst->row_idx = (int *)calloc(csc_dst->nnz,sizeof(int));
   csc_dst->values  = (float *)calloc(csc_dst->nnz,sizeof(float));
   
   {
@@ -433,6 +433,31 @@ void student_csr_matrix_to_csc_matrix( csr_matrix_t *csr_src,
 
     // Most important hint you will receive: draw this out on paper first.
 
+    // PASS 1: figure out the number of non-zeros in each column
+    for( int nnz_idx = 0; nnz_idx < csr_src->nnz; ++nnz_idx )
+    {
+        int col = csr_src->col_idx[nnz_idx];
+        csc_dst->col_idx[col+1] += 1;
+    }
+    // Cumulative sum to get the col_ptr
+    for( int col = 0; col < csc_dst->n; ++col )
+    {
+      csc_dst->col_idx[col+1] += csc_dst->col_idx[col];
+    }
+    // PASS 2: place the row_idx and values in the right location
+    int *current_pos = (int *)calloc(csc_dst->n, sizeof(int));
+    for( int row = 0; row < csr_src->m; ++row )
+    {
+        for( int idx = csr_src->row_idx[row]; idx < csr_src->row_idx[row+1]; ++idx )
+        {
+            int col = csr_src->col_idx[idx];
+            int next_pos = csc_dst->col_idx[col] + current_pos[col];
+            csc_dst->row_idx[next_pos] = row;
+            csc_dst->values[next_pos]  = csr_src->values[idx];
+            current_pos[col] += 1;
+        }
+    }
+    free(current_pos);
   }
 }
 
