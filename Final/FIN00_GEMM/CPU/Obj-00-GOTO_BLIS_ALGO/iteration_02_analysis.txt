@@ -1,0 +1,28 @@
+ITERATION 2: tuned_variant00_op
+================================================================================
+
+1. CODE EXPLANATION
+--------------------------------------------------------------------------------
+This is the baseline GEMM implementation - a straightforward triple-nested loop
+that computes C = A * B + C (or more accurately, the dot product of rows of A
+with columns of B). The implementation uses MPI for distributed memory parallelism.
+
+Key structure:
+- Three nested loops over matrix dimensions (m, n, k)
+- Root rank distributes A and B to other ranks, each rank computes portion of C
+- MPI Send/Recv for inter-rank communication
+- Straightforward scalar operations with minimal optimization
+
+The baseline serves as a reference point to measure improvements from subsequent
+optimizations like cache blocking, data packing, SIMD, and parallelization.
+
+2. PERFORMANCE
+--------------------------------------------------------------------------------
+Performance data available from CSV file
+
+This baseline performance represents the unoptimized, purely distributed-memory
+implementation. Subsequent iterations will build upon this foundation, adding
+optimizations that progressively improve performance through better cache reuse,
+vectorization, and shared-memory parallelism.
+
+See plot: results/plot_iter_02_tuned_variant00_op.png
