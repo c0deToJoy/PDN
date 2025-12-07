@@ -1,0 +1,40 @@
+ITERATION 17: tuned_variant13_op_mr_ilp
+================================================================================
+
+1. CODE CHANGES FROM PREVIOUS ITERATION
+--------------------------------------------------------------------------------
+Comparing tuned_variant12_op_kunroll_with_overrun_for_ilp.c -> tuned_variant13_op_mr_ilp.c
+
+Key changes detected:
+  - BLOCK_MR (micro-kernel m blocking) introduced/modified
+  - BLOCK_NR (micro-kernel n blocking) introduced/modified
+
+Diff excerpt (first 100 lines of changes):
+--- Obj-00-GOTO_BLIS_ALGO/tuned_variant12_op_kunroll_with_overrun_for_ilp.c	2025-12-05 03:05:55.598484631 +0000
++++ Obj-00-GOTO_BLIS_ALGO/tuned_variant13_op_mr_ilp.c	2025-12-05 03:05:55.598484631 +0000
++			  #pragma unroll BLOCK_MR
++			      #pragma unroll BLOCK_MR
++			  #pragma unroll BLOCK_MR
+...
+
+
+2. PERFORMANCE ANALYSIS
+--------------------------------------------------------------------------------
+Performance data from CSV files:
+
+Performance data not available in CSV format
+
+Corresponding plot: results/plot_iter_17_tuned_variant13_op_mr_ilp.png
+
+
+3. EXPLANATION AND HYPOTHESIS
+--------------------------------------------------------------------------------
+Instruction-level parallelism (ILP) optimization through loop unrolling
+allows multiple independent operations to execute simultaneously on modern
+superscalar processors, improving throughput.
+
+To test this hypothesis:
+- Profile cache miss rates (perf stat -e cache-misses,cache-references)
+- Analyze instruction mix and IPC (instructions per cycle)
+- Vary block sizes to find optimal values for target architecture
+- Compare performance across different matrix sizes and shapes

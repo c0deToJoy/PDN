@@ -1,0 +1,88 @@
+ITERATION 8: tuned_variant05_op_block_mr
+================================================================================
+
+1. CODE CHANGES FROM PREVIOUS ITERATION
+--------------------------------------------------------------------------------
+Comparing tuned_variant04_op_block_nr.c -> tuned_variant05_op_block_mr.c
+
+Key changes detected:
+  - BLOCK_NC (n-dimension blocking) introduced/modified
+  - BLOCK_KC (k-dimension blocking) introduced/modified
+  - BLOCK_MC (m-dimension blocking) introduced/modified
+  - BLOCK_MR (micro-kernel m blocking) introduced/modified
+  - BLOCK_NR (micro-kernel n blocking) introduced/modified
+  - OpenMP/threading introduced
+
+Diff excerpt (first 100 lines of changes):
+--- Obj-00-GOTO_BLIS_ALGO/tuned_variant04_op_block_nr.c	2025-12-05 03:05:55.598484631 +0000
++++ Obj-00-GOTO_BLIS_ALGO/tuned_variant05_op_block_mr.c	2025-12-05 03:05:55.598484631 +0000
++
++#ifndef BLOCK_MR
++#define BLOCK_MR 16
++#endif /* BLOCK_MR */
++
++#if (BLOCK_MC) % (BLOCK_MR) != 0
++#error "MR must be a factor of MC.\n"
++#endif
++
++#if 1
+-		  for( int i0_i = 0; i0_i < BLOCK_MC; ++i0_i  )
++		  for( int i0_i = 0; i0_i < BLOCK_MC; i0_i += BLOCK_MR  )
++		    // MICRO-KERNEL: Performs a MRxNRxKC matrix-matrix multiplication
++			for( int i0_r = 0; i0_r < BLOCK_MR; ++i0_r  )
+-			  int i0 = i0_o + i0_i;
++			  int i0 = i0_o + i0_i + i0_r;
++
++#else
++      // Steady State
++      for( int j0 = 0; j0 < n0_fringe_start; ++j0 )
++	{
++	  // Steady State
++	  for( int p0 = 0; p0 < k0_fringe_start; ++p0 )
++	    {
++	      // Steady State
++	      for( int i0 = 0; i0 < m0_fringe_start; ++i0 )
++		{
++		  float A_ip = A_distributed[i0 * cs_A + p0 * rs_A];
++		  float B_pj = B_distributed[p0 * cs_B + j0 * rs_B];
++
++		  C_distributed[i0 * cs_C + j0 * rs_C]  += A_ip*B_pj;
++		}
++
++	      /* NOTE: Remainder of the loops handles the off cases. */
++	      // Fringe for m0
++	      for( int i0 = m0_fringe_start; i0 < m0; ++i0 )
++		{
++		  float A_ip = A_distributed[i0 * cs_A + p0 * rs_A];
++		  float B_pj = B_distributed[p0 * cs_B + j0 * rs_B];
++
++		  C_distributed[i0 * cs_C + j0 * rs_C]  += A_ip*B_pj;
++		}
++
++	    }
++	  // Fringe for k0
++	  for( int p0 = k0_fringe_start; p0 < k0; ++p0 )
++	    for( int i0 = 0; i0 < m0; ++i0 )
++	      {
+...
+
+
+2. PERFORMANCE ANALYSIS
+--------------------------------------------------------------------------------
+Performance data from CSV files:
+
+Performance data not available in CSV format
+
+Corresponding plot: results/plot_iter_08_tuned_variant05_op_block_mr.png
+
+
+3. EXPLANATION AND HYPOTHESIS
+--------------------------------------------------------------------------------
+BLOCK_MR completes the micro-kernel with m-dimension register blocking.
+The MR x NR micro-kernel is now fully optimized for register tile computation.
+
+To test this hypothesis:
+- Profile cache miss rates (perf stat -e cache-misses,cache-references)
+- Analyze instruction mix and IPC (instructions per cycle)
+- Vary block sizes to find optimal values for target architecture
+- Compare performance across different matrix sizes and shapes

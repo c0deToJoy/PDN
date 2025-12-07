@@ -1,0 +1,90 @@
+ITERATION 12: tuned_variant08_op_zero_pack_remove_k_fringe
+================================================================================
+
+1. CODE CHANGES FROM PREVIOUS ITERATION
+--------------------------------------------------------------------------------
+Comparing tuned_variant07_op_pack_dlt_A.c -> tuned_variant08_op_zero_pack_remove_k_fringe.c
+
+Key changes detected:
+  - BLOCK_NC (n-dimension blocking) introduced/modified
+  - BLOCK_KC (k-dimension blocking) introduced/modified
+  - BLOCK_MC (m-dimension blocking) introduced/modified
+  - BLOCK_MR (micro-kernel m blocking) introduced/modified
+  - BLOCK_NR (micro-kernel n blocking) introduced/modified
+  - Data packing routines added/modified
+  - OpenMP/threading introduced
+
+Diff excerpt (first 100 lines of changes):
+--- Obj-00-GOTO_BLIS_ALGO/tuned_variant07_op_pack_dlt_A.c	2025-12-05 03:05:55.598484631 +0000
++++ Obj-00-GOTO_BLIS_ALGO/tuned_variant08_op_zero_pack_remove_k_fringe.c	2025-12-05 03:05:55.598484631 +0000
++
++// https://stackoverflow.com/questions/3437404/min-and-max-in-c
++#define min(a,b)				\
++  ({ __typeof__ (a) _a = (a);			\
++    __typeof__ (b) _b = (b);			\
++    _a < _b ? _a : _b; })
++
++#define max(a,b)				\
++  ({ __typeof__ (a) _a = (a);			\
++    __typeof__ (b) _b = (b);			\
++    _a > _b ? _a : _b; })
++
+-	  for( int p0_o = 0; p0_o < k0_fringe_start; p0_o += BLOCK_KC )
++	  for( int p0_o = 0; p0_o < k0; p0_o += BLOCK_KC )
++	      // When we pack B and A we will pad the buffers
++	      // with zeros instead of dealing with the fringe
++	      // case.
++	      // This should be enough, but we can also
++	      // pass the size of remaining kc block to the kernel
++	      // and short circuit the computation. The complication
++	      // there is we might want to unroll that loop, so we
++	      // will have a small fringe.
++	      int block_kc_remainder = min(BLOCK_KC, k0-p0_o);
++	      
+-		      B_dlt[j0_i_bid][p0_i][j0_r] =
+-			B_distributed[p0 * cs_B + j0 * rs_B];
++		      // If we are not in the fringe then pack the value
++		      // otherwise pad with 0.
++		      if (p0 < k0 )
++			B_dlt[j0_i_bid][p0_i][j0_r] =
++			  B_distributed[p0 * cs_B + j0 * rs_B];
++		      else
++			B_dlt[j0_i_bid][p0_i][j0_r] = 0.0f;
++
+-			  A_dlt[i0_i_bid][p0_i][i0_r] =
+-			    A_distributed[i0 * cs_A + p0 * rs_A];
++			  if (p0 < k0 )
++			    A_dlt[i0_i_bid][p0_i][i0_r] =
++			      A_distributed[i0 * cs_A + p0 * rs_A];
++			  else
++			    A_dlt[i0_i_bid][p0_i][i0_r] = 0.0f;
+-		  for( int p0_i = 0; p0_i < BLOCK_KC; ++p0_i )
++		  for( int p0_i = 0; p0_i < block_kc_remainder; ++p0_i )
+-	  // Fringe for k0
+-	  for( int p0 = k0_fringe_start; p0 < k0; ++p0 )
+-	    for( int i0 = 0; i0 < m0; ++i0 )
+-	      for( int j0_i = 0; j0_i < BLOCK_NC; ++j0_i )
+-		{
+...
+
+
+2. PERFORMANCE ANALYSIS
+--------------------------------------------------------------------------------
+Performance data from CSV files:
+
+Performance data not available in CSV format
+
+Corresponding plot: results/plot_iter_12_tuned_variant08_op_zero_pack_remove_k_fringe.png
+
+
+3. EXPLANATION AND HYPOTHESIS
+--------------------------------------------------------------------------------
+Fringe case optimization reduces overhead from handling edge cases.
+By minimizing branching and padding, the code achieves more consistent
+performance across different matrix sizes.
+
+To test this hypothesis:
+- Profile cache miss rates (perf stat -e cache-misses,cache-references)
+- Analyze instruction mix and IPC (instructions per cycle)
+- Vary block sizes to find optimal values for target architecture
+- Compare performance across different matrix sizes and shapes

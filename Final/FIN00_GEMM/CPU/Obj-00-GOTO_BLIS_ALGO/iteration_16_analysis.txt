@@ -1,0 +1,83 @@
+ITERATION 16: tuned_variant12_op_kunroll_with_overrun_for_ilp
+================================================================================
+
+1. CODE CHANGES FROM PREVIOUS ITERATION
+--------------------------------------------------------------------------------
+Comparing tuned_variant11_op_minimize_kc_zerowork.c -> tuned_variant12_op_kunroll_with_overrun_for_ilp.c
+
+Key changes detected:
+  - BLOCK_NC (n-dimension blocking) introduced/modified
+  - BLOCK_KC (k-dimension blocking) introduced/modified
+  - BLOCK_MR (micro-kernel m blocking) introduced/modified
+  - BLOCK_NR (micro-kernel n blocking) introduced/modified
+  - Data packing routines added/modified
+
+Diff excerpt (first 100 lines of changes):
+--- Obj-00-GOTO_BLIS_ALGO/tuned_variant11_op_minimize_kc_zerowork.c	2025-12-05 03:05:55.598484631 +0000
++++ Obj-00-GOTO_BLIS_ALGO/tuned_variant12_op_kunroll_with_overrun_for_ilp.c	2025-12-05 03:05:55.598484631 +0000
+-
++#ifndef BLOCK_KU
++#define BLOCK_KU 8
++#endif /* BLOCK_KU */
++
++#if (BLOCK_KC) % (BLOCK_KU) != 0
++#error "KU must be a factor of KC.\n"
++#endif
++
+-			for( int p0_i = 0; p0_i < block_kc_remainder; ++p0_i )
+-			  for( int j0_r = 0; j0_r < BLOCK_NR; ++j0_r  )
+-			    for( int i0_r = 0; i0_r < BLOCK_MR; ++i0_r  )
+-			      {
+-				int j0 = j0_o + j0_i + j0_r;
+-				int i0 = i0_o + i0_i + i0_r;
+-				int p0 = p0_o + p0_i;
+-				int j0_i_bid = j0_i/(BLOCK_NR);
+-				int i0_i_bid = i0_i/(BLOCK_MR);
++			// We do not need to worry about fringe because we zero padded
++			// the packed A and B buffers.
++			for( int p0_i = 0; p0_i < block_kc_remainder; p0_i += BLOCK_KU )
++			  // six of one, half dozen of another that gcc listens to this.
++			  // Typically you are better off hand (writing a tool)
++			  // unrolling loops.
++                          #pragma unroll BLOCK_KU
++			  for( int p0_u = 0; p0_u < BLOCK_KU; ++ p0_u )
++			    for( int j0_r = 0; j0_r < BLOCK_NR; ++j0_r  )
++			      for( int i0_r = 0; i0_r < BLOCK_MR; ++i0_r  )
++				{
++				  int j0 = j0_o + j0_i + j0_r;
++				  int i0 = i0_o + i0_i + i0_r;
++				  int p0 = p0_o + p0_i + p0_u;
++
++				  int j0_i_bid = j0_i/(BLOCK_NR);
++				  int i0_i_bid = i0_i/(BLOCK_MR);
+-				float A_ip = A_dlt[i0_i_bid][p0_i][i0_r];
+-				float B_pj = B_dlt[j0_i_bid][p0_i][j0_r];
++				  float A_ip = A_dlt[i0_i_bid][p0_i+p0_u][i0_r];
++				  float B_pj = B_dlt[j0_i_bid][p0_i+p0_u][j0_r];
+-				C_micro[j0_r][i0_r] += A_ip*B_pj;
+-			      }
++				  C_micro[j0_r][i0_r] += A_ip*B_pj;
++				}
+...
+
+
+2. PERFORMANCE ANALYSIS
+--------------------------------------------------------------------------------
+Performance data from CSV files:
+
+Performance data not available in CSV format
+
+Corresponding plot: results/plot_iter_16_tuned_variant12_op_kunroll_with_overrun_for_ilp.png
+
+
+3. EXPLANATION AND HYPOTHESIS
+--------------------------------------------------------------------------------
+Instruction-level parallelism (ILP) optimization through loop unrolling
+allows multiple independent operations to execute simultaneously on modern
+superscalar processors, improving throughput.
+
+To test this hypothesis:
+- Profile cache miss rates (perf stat -e cache-misses,cache-references)
+- Analyze instruction mix and IPC (instructions per cycle)
+- Vary block sizes to find optimal values for target architecture
+- Compare performance across different matrix sizes and shapes

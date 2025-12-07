@@ -1,0 +1,88 @@
+ITERATION 10: tuned_variant06_op_pack_dlt_B
+================================================================================
+
+1. CODE CHANGES FROM PREVIOUS ITERATION
+--------------------------------------------------------------------------------
+Comparing tuned_variant05_op_block_micro_kernel.c -> tuned_variant06_op_pack_dlt_B.c
+
+Key changes detected:
+  - BLOCK_NC (n-dimension blocking) introduced/modified
+  - BLOCK_KC (k-dimension blocking) introduced/modified
+  - BLOCK_MC (m-dimension blocking) introduced/modified
+  - BLOCK_NR (micro-kernel n blocking) introduced/modified
+  - Data packing routines added/modified
+
+Diff excerpt (first 100 lines of changes):
+--- Obj-00-GOTO_BLIS_ALGO/tuned_variant05_op_block_micro_kernel.c	2025-12-05 03:05:55.598484631 +0000
++++ Obj-00-GOTO_BLIS_ALGO/tuned_variant06_op_pack_dlt_B.c	2025-12-05 03:05:55.598484631 +0000
+-#if 1
++      int num_j0_i_blocks = (BLOCK_NC) / (BLOCK_NR);
++      
++
++	      // We will pack and perform a Data layout transformation
++	      // on a KCxNC block of B
++	      // This step will take O(n^2) time and will be amortized
++	      // by O(n^3) of FMA work.
++	      // The layout of B_dlt will mirror the order that the micro-
++	      // kernel will use to access elements.
++	      //   B_dlt[j0_i/NR][p0_i][j0_r] <-- B[p0_o][j0_o]
++	      // Right now we will use a multi-dimension C array, but
++	      // later on we will flatten it.
++
++	      float B_dlt[num_j0_i_blocks][BLOCK_KC][BLOCK_NR];
++	      for( int j0_i = 0; j0_i < BLOCK_NC; j0_i += BLOCK_NR )
++		for( int p0_i = 0; p0_i < BLOCK_KC; ++p0_i )
++		  for( int j0_r = 0; j0_r < BLOCK_NR; ++j0_r  )
++		    {
++		      int j0 = j0_o + j0_i + j0_r;
++		      int p0 = p0_o + p0_i;
++
++		      int j0_i_bid = j0_i/(BLOCK_NR);
++
++		      B_dlt[j0_i_bid][p0_i][j0_r] =
++			B_distributed[p0 * cs_B + j0 * rs_B];
++		    }
++
++	      
++			      
++			      int j0_i_bid = j0_i/(BLOCK_NR);
++			      
+-			      float B_pj = B_distributed[p0 * cs_B + j0 * rs_B];
++			      float B_pj = B_dlt[j0_i_bid][p0_i][j0_r];
+-#else
+-      // Steady State
+-      for( int j0 = 0; j0 < n0_fringe_start; ++j0 )
+-	{
+-	  // Steady State
+-	  for( int p0 = 0; p0 < k0_fringe_start; ++p0 )
+-	    {
+-	      // Steady State
+-	      for( int i0 = 0; i0 < m0_fringe_start; ++i0 )
+-		{
+-		  float A_ip = A_distributed[i0 * cs_A + p0 * rs_A];
+-		  float B_pj = B_distributed[p0 * cs_B + j0 * rs_B];
+-
+-		  C_distributed[i0 * cs_C + j0 * rs_C]  += A_ip*B_pj;
+...
+
+
+2. PERFORMANCE ANALYSIS
+--------------------------------------------------------------------------------
+Performance data from CSV files:
+
+Performance data not available in CSV format
+
+Corresponding plot: results/plot_iter_10_tuned_variant06_op_pack_dlt_B.png
+
+
+3. EXPLANATION AND HYPOTHESIS
+--------------------------------------------------------------------------------
+Data packing for matrix B reorganizes data into a contiguous, cache-friendly
+layout. This eliminates strided accesses and improves memory bandwidth
+utilization, leading to significant performance gains.
+
+To test this hypothesis:
+- Profile cache miss rates (perf stat -e cache-misses,cache-references)
+- Analyze instruction mix and IPC (instructions per cycle)
+- Vary block sizes to find optimal values for target architecture
+- Compare performance across different matrix sizes and shapes

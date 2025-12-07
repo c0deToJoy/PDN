@@ -1,0 +1,87 @@
+ITERATION 6: tuned_variant03_op_block_mc
+================================================================================
+
+1. CODE CHANGES FROM PREVIOUS ITERATION
+--------------------------------------------------------------------------------
+Comparing tuned_variant02_op.c -> tuned_variant03_op_block_mc.c
+
+Key changes detected:
+  - BLOCK_NC (n-dimension blocking) introduced/modified
+  - BLOCK_KC (k-dimension blocking) introduced/modified
+  - BLOCK_MC (m-dimension blocking) introduced/modified
+  - OpenMP/threading introduced
+
+Diff excerpt (first 100 lines of changes):
+--- Obj-00-GOTO_BLIS_ALGO/tuned_variant02_op.c	2025-12-05 03:05:55.598484631 +0000
++++ Obj-00-GOTO_BLIS_ALGO/tuned_variant03_op_block_mc.c	2025-12-05 03:05:55.598484631 +0000
++#ifndef BLOCK_MC
++#define BLOCK_MC 128
++#endif /* BLOCK_MC */
++
++      int m0_fringe_start = m0 - (m0%(BLOCK_MC));
++
++      /*
++	Start of Steady State
++	
++	The following loops represent the bulk of the computation
++	and will be the main focus of the remaining optimizations.
++	Once we have the data layout transformation we will bring
++	the fringe code back into the steady-state. Until then our
++	optimizations will be much easier to perform if we do not
++	need to think about corner cases.
++
++	Additionally, there are some asymmetries that we will need
++	to consider. The main one is that accesses to A and B are
++	only reads, whereas accesses to C will require both a load
++	and store. This will help determine where we place the KC
++	loop as it will amortize those load/stores with KC number
++	of FMA instructions.
++      */
+-	    for( int i0 = 0; i0 < m0; ++i0 )
+-	      for( int j0_i = 0; j0_i < BLOCK_NC; ++j0_i )
+-		// Note: This will be moved in later iterations
+-		for( int p0_i = 0; p0_i < BLOCK_KC; ++p0_i )
+-		{
+-		  int j0 = j0_o + j0_i;
+-		  int p0 = p0_o + p0_i;
+-		  float A_ip = A_distributed[i0 * cs_A + p0 * rs_A];
+-		  float B_pj = B_distributed[p0 * cs_B + j0 * rs_B];
++	    {
++	      // Steady State
++	      for( int i0_o = 0; i0_o < m0_fringe_start; i0_o += BLOCK_MC )
++		// KERNEL: Performs a MCxNCxKC matrix-matrix multiplication
++		for( int j0_i = 0; j0_i < BLOCK_NC; ++j0_i )
++		  for( int i0_i = 0; i0_i < BLOCK_MC; ++i0_i  )
++		    // Note: This will be moved in later iterations
++		    for( int p0_i = 0; p0_i < BLOCK_KC; ++p0_i )
++		      {
++			int j0 = j0_o + j0_i;
++			int i0 = i0_o + i0_i;
++			int p0 = p0_o + p0_i;
++			float A_ip = A_distributed[i0 * cs_A + p0 * rs_A];
++			float B_pj = B_distributed[p0 * cs_B + j0 * rs_B];
++
++			C_distributed[i0 * cs_C + j0 * rs_C]  += A_ip*B_pj;
+...
+
+
+2. PERFORMANCE ANALYSIS
+--------------------------------------------------------------------------------
+Performance data from CSV files:
+
+Performance data not available in CSV format
+
+Corresponding plot: results/plot_iter_06_tuned_variant03_op_block_mc.png
+
+
+3. EXPLANATION AND HYPOTHESIS
+--------------------------------------------------------------------------------
+BLOCK_MC adds blocking in the m-dimension (rows of C), creating the full
+3-level cache hierarchy blocking structure. This ensures the micro-panel
+of C fits in L1 cache while blocks of A and B fit in L2/L3.
+
+To test this hypothesis:
+- Profile cache miss rates (perf stat -e cache-misses,cache-references)
+- Analyze instruction mix and IPC (instructions per cycle)
+- Vary block sizes to find optimal values for target architecture
+- Compare performance across different matrix sizes and shapes

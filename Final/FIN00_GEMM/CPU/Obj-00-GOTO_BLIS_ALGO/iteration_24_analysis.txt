@@ -1,0 +1,45 @@
+ITERATION 24: tuned_variant20_op_2d_sharedmem
+================================================================================
+
+1. CODE CHANGES FROM PREVIOUS ITERATION
+--------------------------------------------------------------------------------
+Comparing tuned_variant19_op_data_dist_1d_sharedmem.c -> tuned_variant20_op_2d_sharedmem.c
+
+Key changes detected:
+  - BLOCK_NC (n-dimension blocking) introduced/modified
+  - BLOCK_MC (m-dimension blocking) introduced/modified
+  - BLOCK_MR (micro-kernel m blocking) introduced/modified
+  - BLOCK_NR (micro-kernel n blocking) introduced/modified
+  - OpenMP/threading introduced
+
+Diff excerpt (first 100 lines of changes):
+--- Obj-00-GOTO_BLIS_ALGO/tuned_variant19_op_data_dist_1d_sharedmem.c	2025-12-05 03:05:55.598484631 +0000
++++ Obj-00-GOTO_BLIS_ALGO/tuned_variant20_op_2d_sharedmem.c	2025-12-05 03:05:55.730484088 +0000
++#ifndef PAR_ROW_THREADS
++#define PAR_ROW_THREADS 2
++#endif /* PAR_ROW_THREADS */
++
++              #pragma omp parallel for num_threads(PAR_ROW_THREADS)
+...
+
+
+2. PERFORMANCE ANALYSIS
+--------------------------------------------------------------------------------
+Performance data from CSV files:
+
+Performance data not available in CSV format
+
+Corresponding plot: results/plot_iter_24_tuned_variant20_op_2d_sharedmem.png
+
+
+3. EXPLANATION AND HYPOTHESIS
+--------------------------------------------------------------------------------
+OpenMP threading introduces shared-memory parallelism, distributing work
+across multiple CPU cores. This provides near-linear speedup for large
+matrix sizes where computation dominates synchronization overhead.
+
+To test this hypothesis:
+- Profile cache miss rates (perf stat -e cache-misses,cache-references)
+- Analyze instruction mix and IPC (instructions per cycle)
+- Vary block sizes to find optimal values for target architecture
+- Compare performance across different matrix sizes and shapes

@@ -1,0 +1,41 @@
+ITERATION 15: tuned_variant11_op_minimize_kc_zerowork
+================================================================================
+
+1. CODE CHANGES FROM PREVIOUS ITERATION
+--------------------------------------------------------------------------------
+Comparing tuned_variant10_op_minimize_n_fringe.c -> tuned_variant11_op_minimize_kc_zerowork.c
+
+Key changes detected:
+  - BLOCK_KC (k-dimension blocking) introduced/modified
+  - BLOCK_MR (micro-kernel m blocking) introduced/modified
+  - BLOCK_NR (micro-kernel n blocking) introduced/modified
+
+Diff excerpt (first 100 lines of changes):
+--- Obj-00-GOTO_BLIS_ALGO/tuned_variant10_op_minimize_n_fringe.c	2025-12-05 03:05:55.598484631 +0000
++++ Obj-00-GOTO_BLIS_ALGO/tuned_variant11_op_minimize_kc_zerowork.c	2025-12-05 03:05:55.598484631 +0000
+-			for( int p0_i = 0; p0_i < BLOCK_KC; ++p0_i )
++			for( int p0_i = 0; p0_i < block_kc_remainder; ++p0_i )
++
+...
+
+
+2. PERFORMANCE ANALYSIS
+--------------------------------------------------------------------------------
+Performance data from CSV files:
+
+Performance data not available in CSV format
+
+Corresponding plot: results/plot_iter_15_tuned_variant11_op_minimize_kc_zerowork.png
+
+
+3. EXPLANATION AND HYPOTHESIS
+--------------------------------------------------------------------------------
+Performance change is due to incremental refinement of the algorithm.
+Likely improvements in code generation, reduced overhead, or better
+utilization of existing optimizations.
+
+To test this hypothesis:
+- Profile cache miss rates (perf stat -e cache-misses,cache-references)
+- Analyze instruction mix and IPC (instructions per cycle)
+- Vary block sizes to find optimal values for target architecture
+- Compare performance across different matrix sizes and shapes

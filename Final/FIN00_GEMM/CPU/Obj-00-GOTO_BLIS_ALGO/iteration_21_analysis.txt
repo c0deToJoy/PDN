@@ -1,0 +1,58 @@
+ITERATION 21: tuned_variant17_op_pseudo_simd
+================================================================================
+
+1. CODE CHANGES FROM PREVIOUS ITERATION
+--------------------------------------------------------------------------------
+Comparing tuned_variant16_op_presimd_data_dist_elem_cleaner.c -> tuned_variant17_op_pseudo_simd.c
+
+Key changes detected:
+  - BLOCK_NC (n-dimension blocking) introduced/modified
+  - BLOCK_MC (m-dimension blocking) introduced/modified
+  - BLOCK_MR (micro-kernel m blocking) introduced/modified
+  - BLOCK_NR (micro-kernel n blocking) introduced/modified
+  - SIMD/vectorization (AVX2) introduced
+  - OpenMP/threading introduced
+
+Diff excerpt (first 100 lines of changes):
+--- Obj-00-GOTO_BLIS_ALGO/tuned_variant16_op_presimd_data_dist_elem_cleaner.c	2025-12-05 03:05:55.598484631 +0000
++++ Obj-00-GOTO_BLIS_ALGO/tuned_variant17_op_pseudo_simd.c	2025-12-05 03:05:55.598484631 +0000
+-
++			    // 6 vs 1/2 dozen: if the compiler does this properly, then we should
++			    // see a _mm256_set1_ps or _mm256_xor_ps(a,a) equivalent if we run
++			    // objdump -d this_file.o 
++			    #pragma omp simd
++				// 6 vs 1/2 dozen: if the compiler does this properly, then we should
++				// see a sequence of _mm256_set1_ps(b..), _mm256_load_ps(a..), _mm256_fmadd_(a,b,c..)
++				// equivalent if we run: objdump -d this_file.o 
++                                #pragma omp simd
++			    // 6 vs 1/2 dozen: if the compiler does this properly, then we should
++			    // see a _mm256_load_ps(...) equivalent if we run
++			    // objdump -d this_file.o 
++			    #pragma omp simd
+-      // Fringe for n0
++      //Fringe for n0
+-	}
++    }
+...
+
+
+2. PERFORMANCE ANALYSIS
+--------------------------------------------------------------------------------
+Performance data from CSV files:
+
+Performance data not available in CSV format
+
+Corresponding plot: results/plot_iter_21_tuned_variant17_op_pseudo_simd.png
+
+
+3. EXPLANATION AND HYPOTHESIS
+--------------------------------------------------------------------------------
+SIMD vectorization using AVX2 intrinsics enables processing multiple data
+elements in parallel (4-8 doubles per instruction). This dramatically
+increases computational throughput for floating-point operations.
+
+To test this hypothesis:
+- Profile cache miss rates (perf stat -e cache-misses,cache-references)
+- Analyze instruction mix and IPC (instructions per cycle)
+- Vary block sizes to find optimal values for target architecture
+- Compare performance across different matrix sizes and shapes
