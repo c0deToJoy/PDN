@@ -1,4 +1,4 @@
-ITERATION 21: tuned_variant17_op_pseudo_simd
+ITERATION 21: tuned\_variant17\_op\_pseudo\_simd
 ================================================================================
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
@@ -7,9 +7,9 @@ Implements pseudo-SIMD operations using scalar code structured like SIMD. Operat
 
 ```c
 // Pseudo-SIMD: process 4 elements together
-float a_vec[4] = {a[0], a[1], a[2], a[3]};
-float b_vec[4] = {b[0], b[1], b[2], b[3]};
-for (int v = 0; v < 4; ++v) c_vec[v] += a_vec[v] * b_vec[v];
+float a\_vec[4] = {a[0], a[1], a[2], a[3]};
+float b\_vec[4] = {b[0], b[1], b[2], b[3]};
+for (int v = 0; v < 4; ++v) c\_vec[v] += a\_vec[v] * b\_vec[v];
 ```
 
 This prepares the code structure for actual SIMD intrinsics.
@@ -20,7 +20,7 @@ Performance data from CSV files:
 
 Performance data not available in CSV format
 
-Corresponding plot: results/plot_iter_21_tuned_variant17_op_pseudo_simd.png
+Corresponding plot: results/plot\_iter\_21\_tuned\_variant17\_op\_pseudo\_simd.png
 
 
 3. EXPLANATION AND HYPOTHESIS

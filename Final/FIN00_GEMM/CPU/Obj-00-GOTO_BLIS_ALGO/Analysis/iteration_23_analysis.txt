@@ -1,4 +1,4 @@
-ITERATION 23: tuned_variant19_op_data_dist_1d_sharedmem
+ITERATION 23: tuned\_variant19\_op\_data\_dist\_1d\_sharedmem
 ================================================================================
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
@@ -8,10 +8,10 @@ Introduces OpenMP shared-memory parallelism with 1D work distribution:
 ```c
 #pragma omp parallel
 {
-  int tid = omp_get_thread_num();
-  int num_threads = omp_get_num_threads();
+  int tid = omp\_get\_thread\_num();
+  int num\_threads = omp\_get\_num\_threads();
   // Distribute nc-blocks across threads
-  for (int j1 = tid * BLOCK_NC; j1 < n0; j1 += num_threads * BLOCK_NC) {
+  for (int j1 = tid * BLOCK\_NC; j1 < n0; j1 += num\_threads * BLOCK\_NC) {
 ```
 
 Threads work on different column panels independently, enabling multi-core parallelism.
@@ -22,7 +22,7 @@ Performance data from CSV files:
 
 Performance data not available in CSV format
 
-Corresponding plot: results/plot_iter_23_tuned_variant19_op_data_dist_1d_sharedmem.png
+Corresponding plot: results/plot\_iter\_23\_tuned\_variant19\_op\_data\_dist\_1d\_sharedmem.png
 
 
 3. EXPLANATION AND HYPOTHESIS

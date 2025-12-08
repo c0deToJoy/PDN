@@ -1,4 +1,4 @@
-ITERATION 19: tuned_variant15_op_presimd_data_dist_elem
+ITERATION 19: tuned\_variant15\_op\_presimd\_data\_dist\_elem
 ================================================================================
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
@@ -7,7 +7,7 @@ Prepares data layout for SIMD by organizing elements in a SIMD-friendly pattern:
 
 ```c
 // Pack data in vectors of 4 elements (for future SIMD)
-for (int i = 0; i < MR; i += SIMD_WIDTH) {
+for (int i = 0; i < MR; i += SIMD\_WIDTH) {
   // Group consecutive elements
 }
 ```
@@ -20,7 +20,7 @@ Performance data from CSV files:
 
 Performance data not available in CSV format
 
-Corresponding plot: results/plot_iter_19_tuned_variant15_op_presimd_data_dist_elem.png
+Corresponding plot: results/plot\_iter\_19\_tuned\_variant15\_op\_presimd\_data\_dist\_elem.png
 
 
 3. EXPLANATION AND HYPOTHESIS

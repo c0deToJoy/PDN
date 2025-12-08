@@ -1,4 +1,4 @@
-ITERATION 15: tuned_variant11_op_minimize_kc_zerowork
+ITERATION 15: tuned\_variant11\_op\_minimize\_kc\_zerowork
 ================================================================================
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
@@ -9,7 +9,7 @@ Eliminates unnecessary zero work in the k-dimension by skipping blocks that don'
 if (pb == 0) continue; // Skip zero-sized k-blocks
 ```
 
-This optimization avoids packing and computing empty blocks when k is not evenly divisible by BLOCK_KC.
+This optimization avoids packing and computing empty blocks when k is not evenly divisible by BLOCK\\_KC.
 
 2. PERFORMANCE ANALYSIS
 --------------------------------------------------------------------------------
@@ -17,7 +17,7 @@ Performance data from CSV files:
 
 Performance data not available in CSV format
 
-Corresponding plot: results/plot_iter_15_tuned_variant11_op_minimize_kc_zerowork.png
+Corresponding plot: results/plot\_iter\_15\_tuned\_variant11\_op\_minimize\_kc\_zerowork.png
 
 
 3. EXPLANATION AND HYPOTHESIS

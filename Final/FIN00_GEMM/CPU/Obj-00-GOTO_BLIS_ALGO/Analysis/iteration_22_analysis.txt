@@ -1,4 +1,4 @@
-ITERATION 22: tuned_variant18_op_avx2_simd
+ITERATION 22: tuned\_variant18\_op\_avx2\_simd
 ================================================================================
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
@@ -6,9 +6,9 @@ ITERATION 22: tuned_variant18_op_avx2_simd
 Replaces pseudo-SIMD with actual AVX2 intrinsics for true vectorization:
 
 ```c
-__m256 a_vec = _mm256_load_ps(a_packed);
-__m256 b_vec = _mm256_load_ps(b_packed);
-__m256 c_vec = _mm256_fmadd_ps(a_vec, b_vec, c_vec);
+\_\_m256 a\_vec = \_mm256\_load\_ps(a\_packed);
+\_\_m256 b\_vec = \_mm256\_load\_ps(b\_packed);
+\_\_m256 c\_vec = \_mm256\_fmadd\_ps(a\_vec, b\_vec, c\_vec);
 ```
 
 This enables processing 8 single-precision floats per instruction, dramatically improving computational throughput.
@@ -19,7 +19,7 @@ Performance data from CSV files:
 
 Performance data not available in CSV format
 
-Corresponding plot: results/plot_iter_22_tuned_variant18_op_avx2_simd.png
+Corresponding plot: results/plot\_iter\_22\_tuned\_variant18\_op\_avx2\_simd.png
 
 
 3. EXPLANATION AND HYPOTHESIS

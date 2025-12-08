@@ -1,4 +1,4 @@
-ITERATION 9: tuned_variant05_op_block_micro_kernel
+ITERATION 9: tuned\_variant05\_op\_block\_micro\_kernel
 ================================================================================
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
@@ -6,10 +6,10 @@ ITERATION 9: tuned_variant05_op_block_micro_kernel
 Refactors the innermost computation into a dedicated micro-kernel function. Instead of inline loops, the code now calls:
 
 ```c
-AddDot_MRxNR_stride_dlt(ir, jr, pb, 
-                        &A_distributed[i2*cs_A + p1*rs_A], rs_A, cs_A,
-                        &B_distributed[p1*cs_B + j2*rs_B], rs_B, cs_B,
-                        &C_distributed[i2*cs_C + j2*rs_C], rs_C, cs_C);
+AddDot\_MRxNR\_stride\_dlt(ir, jr, pb, 
+                        &A\_distributed[i2*cs\_A + p1*rs\_A], rs\_A, cs\_A,
+                        &B\_distributed[p1*cs\_B + j2*rs\_B], rs\_B, cs\_B,
+                        &C\_distributed[i2*cs\_C + j2*rs\_C], rs\_C, cs\_C);
 ```
 
 This encapsulates the register-tiled computation, making it easier to optimize and potentially inline by the compiler.
@@ -20,7 +20,7 @@ Performance data from CSV files:
 
 Performance data not available in CSV format
 
-Corresponding plot: results/plot_iter_09_tuned_variant05_op_block_micro_kernel.png
+Corresponding plot: results/plot\_iter\_09\_tuned\_variant05\_op\_block\_micro\_kernel.png
 
 
 3. EXPLANATION AND HYPOTHESIS

@@ -1,4 +1,4 @@
-ITERATION 20: tuned_variant16_op_presimd_data_dist_elem_cleaner
+ITERATION 20: tuned\_variant16\_op\_presimd\_data\_dist\_elem\_cleaner
 ================================================================================
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
@@ -11,7 +11,7 @@ Performance data from CSV files:
 
 Performance data not available in CSV format
 
-Corresponding plot: results/plot_iter_20_tuned_variant16_op_presimd_data_dist_elem_cleaner.png
+Corresponding plot: results/plot\_iter\_20\_tuned\_variant16\_op\_presimd\_data\_dist\_elem\_cleaner.png
 
 
 3. EXPLANATION AND HYPOTHESIS

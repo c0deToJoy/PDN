@@ -1,13 +1,13 @@
-ITERATION 12: tuned_variant08_op_zero_pack_remove_k_fringe
+ITERATION 12: tuned\_variant08\_op\_zero\_pack\_remove\_k\_fringe
 ================================================================================
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Removes the k-dimension fringe handling by adjusting BLOCK_KC to ensure it always divides evenly. The packing routines now assume no k-fringe:
+Removes the k-dimension fringe handling by adjusting BLOCK\\_KC to ensure it always divides evenly. The packing routines now assume no k-fringe:
 
 ```c
 // Zero-pad during packing if necessary
-for (int p = 0; p < BLOCK_KC; ++p) {
+for (int p = 0; p < BLOCK\_KC; ++p) {
   // Actual data or zero padding
 }
 ```
@@ -20,7 +20,7 @@ Performance data from CSV files:
 
 Performance data not available in CSV format
 
-Corresponding plot: results/plot_iter_12_tuned_variant08_op_zero_pack_remove_k_fringe.png
+Corresponding plot: results/plot\_iter\_12\_tuned\_variant08\_op\_zero\_pack\_remove\_k\_fringe.png
 
 
 3. EXPLANATION AND HYPOTHESIS

@@ -1,4 +1,4 @@
-ITERATION 11: tuned_variant07_op_pack_dlt_A
+ITERATION 11: tuned\_variant07\_op\_pack\_dlt\_A
 ================================================================================
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
@@ -6,9 +6,9 @@ ITERATION 11: tuned_variant07_op_pack_dlt_A
 Adds data packing for matrix A, complementing the B packing from iteration 10:
 
 ```c
-float *A_packed = (float*)malloc(pb * ib * sizeof(float));
-pack_matrix_A(pb, ib, &A_distributed[i1*cs_A + p1*rs_A], 
-              rs_A, cs_A, A_packed);
+float *A\_packed = (float*)malloc(pb * ib * sizeof(float));
+pack\_matrix\_A(pb, ib, &A\_distributed[i1*cs\_A + p1*rs\_A], 
+              rs\_A, cs\_A, A\_packed);
 ```
 
 With both A and B packed into contiguous layouts, the micro-kernel achieves near-optimal memory access patterns.
@@ -19,7 +19,7 @@ Performance data from CSV files:
 
 Performance data not available in CSV format
 
-Corresponding plot: results/plot_iter_11_tuned_variant07_op_pack_dlt_A.png
+Corresponding plot: results/plot\_iter\_11\_tuned\_variant07\_op\_pack\_dlt\_A.png
 
 
 3. EXPLANATION AND HYPOTHESIS

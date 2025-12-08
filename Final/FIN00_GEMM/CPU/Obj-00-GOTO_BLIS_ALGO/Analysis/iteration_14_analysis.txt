@@ -1,12 +1,12 @@
-ITERATION 14: tuned_variant10_op_minimize_n_fringe
+ITERATION 14: tuned\_variant10\_op\_minimize\_n\_fringe
 ================================================================================
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Similar to iteration 13, but for the n-dimension. BLOCK_NC is tuned to minimize n-fringe cases:
+Similar to iteration 13, but for the n-dimension. BLOCK\\_NC is tuned to minimize n-fringe cases:
 
 ```c
-int n0_aligned = (n0 / BLOCK_NC) * BLOCK_NC;
+int n0\_aligned = (n0 / BLOCK\_NC) * BLOCK\_NC;
 // Minimal n-fringe handling
 ```
 
@@ -18,7 +18,7 @@ Performance data from CSV files:
 
 Performance data not available in CSV format
 
-Corresponding plot: results/plot_iter_14_tuned_variant10_op_minimize_n_fringe.png
+Corresponding plot: results/plot\_iter\_14\_tuned\_variant10\_op\_minimize\_n\_fringe.png
 
 
 3. EXPLANATION AND HYPOTHESIS

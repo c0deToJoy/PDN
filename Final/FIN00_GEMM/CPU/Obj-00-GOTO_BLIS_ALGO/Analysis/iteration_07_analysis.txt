@@ -1,13 +1,13 @@
-ITERATION 7: tuned_variant04_op_block_nr
+ITERATION 7: tuned\_variant04\_op\_block\_nr
 ================================================================================
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Introduces micro-kernel blocking with BLOCK_NR (default 4) for register-level optimization. The innermost j-loop is now blocked by BLOCK_NR:
+Introduces micro-kernel blocking with BLOCK\\_NR (default 4) for register-level optimization. The innermost j-loop is now blocked by BLOCK\\_NR:
 
 ```c
-for( int j2 = j1; j2 < j1 + jb; j2 += BLOCK_NR ) {
-  int jr = (j2 + BLOCK_NR <= j1 + jb) ? BLOCK_NR : (j1 + jb) - j2;
+for( int j2 = j1; j2 < j1 + jb; j2 += BLOCK\_NR ) {
+  int jr = (j2 + BLOCK\_NR <= j1 + jb) ? BLOCK\_NR : (j1 + jb) - j2;
 ```
 
 This creates small register tiles (MR × NR) that can be kept entirely in CPU registers during the micro-kernel computation.
@@ -18,12 +18,12 @@ Performance data from CSV files:
 
 Performance data not available in CSV format
 
-Corresponding plot: results/plot_iter_07_tuned_variant04_op_block_nr.png
+Corresponding plot: results/plot\_iter\_07\_tuned\_variant04\_op\_block\_nr.png
 
 
 3. EXPLANATION AND HYPOTHESIS
 --------------------------------------------------------------------------------
-BLOCK_NR introduces micro-kernel blocking for register-level optimization.
+BLOCK\\_NR introduces micro-kernel blocking for register-level optimization.
 Small blocks are kept in registers for the innermost computation, enabling
 better instruction-level parallelism and register reuse.
 

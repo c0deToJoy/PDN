@@ -1,12 +1,12 @@
-ITERATION 13: tuned_variant09_op_minimize_m_fringe
+ITERATION 13: tuned\_variant09\_op\_minimize\_m\_fringe
 ================================================================================
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Optimizes m-dimension fringe handling by minimizing the edge cases. The code now ensures BLOCK_MC is chosen such that m-fringe is minimal:
+Optimizes m-dimension fringe handling by minimizing the edge cases. The code now ensures BLOCK\\_MC is chosen such that m-fringe is minimal:
 
 ```c
-int m0_aligned = (m0 / BLOCK_MC) * BLOCK_MC;
+int m0\_aligned = (m0 / BLOCK\_MC) * BLOCK\_MC;
 // Handle only small m-fringe at the end
 ```
 
@@ -18,7 +18,7 @@ Performance data from CSV files:
 
 Performance data not available in CSV format
 
-Corresponding plot: results/plot_iter_13_tuned_variant09_op_minimize_m_fringe.png
+Corresponding plot: results/plot\_iter\_13\_tuned\_variant09\_op\_minimize\_m\_fringe.png
 
 
 3. EXPLANATION AND HYPOTHESIS

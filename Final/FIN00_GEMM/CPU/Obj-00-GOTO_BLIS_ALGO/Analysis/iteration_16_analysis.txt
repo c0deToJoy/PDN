@@ -1,4 +1,4 @@
-ITERATION 16: tuned_variant12_op_kunroll_with_overrun_for_ilp
+ITERATION 16: tuned\_variant12\_op\_kunroll\_with\_overrun\_for\_ilp
 ================================================================================
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
@@ -6,12 +6,12 @@ ITERATION 16: tuned_variant12_op_kunroll_with_overrun_for_ilp
 Introduces k-dimension loop unrolling with overrun to improve instruction-level parallelism:
 
 ```c
-for (int p = 0; p < BLOCK_KC; p += 4) {
+for (int p = 0; p < BLOCK\_KC; p += 4) {
   // Unrolled 4 iterations
-  c_reg += a[p+0] * b[p+0];
-  c_reg += a[p+1] * b[p+1];
-  c_reg += a[p+2] * b[p+2];
-  c_reg += a[p+3] * b[p+3];
+  c\_reg += a[p+0] * b[p+0];
+  c\_reg += a[p+1] * b[p+1];
+  c\_reg += a[p+2] * b[p+2];
+  c\_reg += a[p+3] * b[p+3];
 }
 ```
 
@@ -23,7 +23,7 @@ Performance data from CSV files:
 
 Performance data not available in CSV format
 
-Corresponding plot: results/plot_iter_16_tuned_variant12_op_kunroll_with_overrun_for_ilp.png
+Corresponding plot: results/plot\_iter\_16\_tuned\_variant12\_op\_kunroll\_with\_overrun\_for\_ilp.png
 
 
 3. EXPLANATION AND HYPOTHESIS

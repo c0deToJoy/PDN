@@ -1,16 +1,16 @@
-ITERATION 5: tuned_variant02_op
+ITERATION 5: tuned\_variant02\_op
 ================================================================================
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Adds BLOCK_KC (k-dimension blocking, default 128) to the existing BLOCK_NC blocking. Now both the k-loop (reduction dimension) and n-loop are blocked:
+Adds BLOCK\\_KC (k-dimension blocking, default 128) to the existing BLOCK\\_NC blocking. Now both the k-loop (reduction dimension) and n-loop are blocked:
 
 ```c
-for( int p1 = 0; p1 < k0; p1 += BLOCK_KC ) {
-  int pb = (p1 + BLOCK_KC <= k0) ? BLOCK_KC : k0 - p1;
+for( int p1 = 0; p1 < k0; p1 += BLOCK\_KC ) {
+  int pb = (p1 + BLOCK\_KC <= k0) ? BLOCK\_KC : k0 - p1;
 ```
 
-This ensures that panels of A (m×BLOCK_KC) and B (BLOCK_KC×n) fit in L2/L3 cache during the inner product accumulation, significantly improving data reuse.
+This ensures that panels of A (m×BLOCK\\_KC) and B (BLOCK\\_KC×n) fit in L2/L3 cache during the inner product accumulation, significantly improving data reuse.
 
 2. PERFORMANCE ANALYSIS
 --------------------------------------------------------------------------------
@@ -18,12 +18,12 @@ Performance data from CSV files:
 
 Performance data not available in CSV format
 
-Corresponding plot: results/plot_iter_05_tuned_variant02_op.png
+Corresponding plot: results/plot\_iter\_05\_tuned\_variant02\_op.png
 
 
 3. EXPLANATION AND HYPOTHESIS
 --------------------------------------------------------------------------------
-BLOCK_KC introduces blocking in the k-dimension (reduction dimension).
+BLOCK\\_KC introduces blocking in the k-dimension (reduction dimension).
 This ensures panels of A and B fit in cache during the inner product,
 significantly improving L2/L3 cache reuse.
 

@@ -1,17 +1,17 @@
-ITERATION 3: tuned_variant000_index_set_split
+ITERATION 3: tuned\_variant000\_index\_set\_split
 ================================================================================
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-This iteration introduces explicit fringe case handling with three block size macros (BLOCK_NC=192, BLOCK_KC=128, BLOCK_MC=128). The code splits index ranges into "steady state" regions that are multiples of block sizes, and "fringe" regions for remainders:
+This iteration introduces explicit fringe case handling with three block size macros (BLOCK\\_NC=192, BLOCK\\_KC=128, BLOCK\\_MC=128). The code splits index ranges into "steady state" regions that are multiples of block sizes, and "fringe" regions for remainders:
 
 ```c
-int n0_fringe_start = n0 - (n0%(BLOCK_NC));
-int k0_fringe_start = k0 - (k0%(BLOCK_KC));
-int m0_fringe_start = m0 - (m0%(BLOCK_MC));
+int n0\_fringe\_start = n0 - (n0%(BLOCK\_NC));
+int k0\_fringe\_start = k0 - (k0%(BLOCK\_KC));
+int m0\_fringe\_start = m0 - (m0%(BLOCK\_MC));
 ```
 
-Separate loops handle the steady-state (0 to fringe_start) and fringe (fringe_start to dimension size) computations, improving code clarity and potentially reducing branching overhead in the main loop.
+Separate loops handle the steady-state (0 to fringe\\_start) and fringe (fringe\\_start to dimension size) computations, improving code clarity and potentially reducing branching overhead in the main loop.
 
 2. PERFORMANCE ANALYSIS
 --------------------------------------------------------------------------------
@@ -19,7 +19,7 @@ Performance data from CSV files:
 
 Performance data not available in CSV format
 
-Corresponding plot: results/plot_iter_03_tuned_variant000_index_set_split.png
+Corresponding plot: results/plot\_iter\_03\_tuned\_variant000\_index\_set\_split.png
 
 
 3. EXPLANATION AND HYPOTHESIS

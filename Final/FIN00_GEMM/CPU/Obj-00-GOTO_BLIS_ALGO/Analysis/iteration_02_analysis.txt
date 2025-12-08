@@ -1,4 +1,4 @@
-ITERATION 2: tuned_variant00_op
+ITERATION 2: tuned\_variant00\_op
 ================================================================================
 
 1. CODE EXPLANATION
@@ -25,4 +25,13 @@ implementation. Subsequent iterations will build upon this foundation, adding
 optimizations that progressively improve performance through better cache reuse,
 vectorization, and shared-memory parallelism.
 
-See plot: results/plot_iter_02_tuned_variant00_op.png
+See plot: results/plot\_iter\_02\_tuned\_variant00\_op.png3. EXPLANATION AND HYPOTHESIS
+--------------------------------------------------------------------------------
+Performance data available from CSV file
+
+This baseline performance represents the unoptimized, purely distributed-memory
+implementation. Subsequent iterations will build upon this foundation, adding
+optimizations that progressively improve performance through better cache reuse,
+vectorization, and shared-memory parallelism.
+
+See plot: results/plot\_iter\_02\_tuned\_variant00\_op.png

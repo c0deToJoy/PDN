@@ -1,13 +1,13 @@
-ITERATION 8: tuned_variant05_op_block_mr
+ITERATION 8: tuned\_variant05\_op\_block\_mr
 ================================================================================
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Adds BLOCK_MR (default 4) to complete the micro-kernel dimensions, creating a 4×4 register tile:
+Adds BLOCK\\_MR (default 4) to complete the micro-kernel dimensions, creating a 4×4 register tile:
 
 ```c
-for( int i2 = i1; i2 < i1 + ib; i2 += BLOCK_MR ) {
-  int ir = (i2 + BLOCK_MR <= i1 + ib) ? BLOCK_MR : (i1 + ib) - i2;
+for( int i2 = i1; i2 < i1 + ib; i2 += BLOCK\_MR ) {
+  int ir = (i2 + BLOCK\_MR <= i1 + ib) ? BLOCK\_MR : (i1 + ib) - i2;
 ```
 
 The micro-kernel now operates on small MR×NR blocks that fit in registers, enabling better instruction-level parallelism and register reuse.
@@ -18,12 +18,12 @@ Performance data from CSV files:
 
 Performance data not available in CSV format
 
-Corresponding plot: results/plot_iter_08_tuned_variant05_op_block_mr.png
+Corresponding plot: results/plot\_iter\_08\_tuned\_variant05\_op\_block\_mr.png
 
 
 3. EXPLANATION AND HYPOTHESIS
 --------------------------------------------------------------------------------
-BLOCK_MR completes the micro-kernel with m-dimension register blocking.
+BLOCK\\_MR completes the micro-kernel with m-dimension register blocking.
 The MR x NR micro-kernel is now fully optimized for register tile computation.
 
 To test this hypothesis:

@@ -1,4 +1,4 @@
-ITERATION 24: tuned_variant20_op_2d_sharedmem
+ITERATION 24: tuned\_variant20\_op\_2d\_sharedmem
 ================================================================================
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
@@ -8,11 +8,11 @@ Extends to 2D shared-memory parallelism, distributing work across both m and n d
 ```c
 #pragma omp parallel
 {
-  int tid = omp_get_thread_num();
-  int row_threads = ROW_THREADS;
-  int col_threads = COL_THREADS;
-  int my_row = tid / col_threads;
-  int my_col = tid % col_threads;
+  int tid = omp\_get\_thread\_num();
+  int row\_threads = ROW\_THREADS;
+  int col\_threads = COL\_THREADS;
+  int my\_row = tid / col\_threads;
+  int my\_col = tid % col\_threads;
 ```
 
 This 2D decomposition provides better load balancing and scalability across many cores.
@@ -23,7 +23,7 @@ Performance data from CSV files:
 
 Performance data not available in CSV format
 
-Corresponding plot: results/plot_iter_24_tuned_variant20_op_2d_sharedmem.png
+Corresponding plot: results/plot\_iter\_24\_tuned\_variant20\_op\_2d\_sharedmem.png
 
 
 3. EXPLANATION AND HYPOTHESIS

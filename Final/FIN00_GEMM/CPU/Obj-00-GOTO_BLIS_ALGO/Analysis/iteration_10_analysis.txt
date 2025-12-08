@@ -1,4 +1,4 @@
-ITERATION 10: tuned_variant06_op_pack_dlt_B
+ITERATION 10: tuned\_variant06\_op\_pack\_dlt\_B
 ================================================================================
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
@@ -6,9 +6,9 @@ ITERATION 10: tuned_variant06_op_pack_dlt_B
 Introduces data packing for matrix B. Before the inner loops, B is reorganized into a contiguous buffer:
 
 ```c
-float *B_packed = (float*)malloc(pb * jb * sizeof(float));
-pack_matrix_B(pb, jb, &B_distributed[p1*cs_B + j1*rs_B], 
-              rs_B, cs_B, B_packed);
+float *B\_packed = (float*)malloc(pb * jb * sizeof(float));
+pack\_matrix\_B(pb, jb, &B\_distributed[p1*cs\_B + j1*rs\_B], 
+              rs\_B, cs\_B, B\_packed);
 ```
 
 Packing eliminates strided accesses to B, improving memory bandwidth and cache line utilization.
@@ -19,7 +19,7 @@ Performance data from CSV files:
 
 Performance data not available in CSV format
 
-Corresponding plot: results/plot_iter_10_tuned_variant06_op_pack_dlt_B.png
+Corresponding plot: results/plot\_iter\_10\_tuned\_variant06\_op\_pack\_dlt\_B.png
 
 
 3. EXPLANATION AND HYPOTHESIS

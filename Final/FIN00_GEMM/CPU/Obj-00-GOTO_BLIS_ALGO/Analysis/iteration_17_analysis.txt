@@ -1,4 +1,4 @@
-ITERATION 17: tuned_variant13_op_mr_ilp
+ITERATION 17: tuned\_variant13\_op\_mr\_ilp
 ================================================================================
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
@@ -21,7 +21,7 @@ Performance data from CSV files:
 
 Performance data not available in CSV format
 
-Corresponding plot: results/plot_iter_17_tuned_variant13_op_mr_ilp.png
+Corresponding plot: results/plot\_iter\_17\_tuned\_variant13\_op\_mr\_ilp.png
 
 
 3. EXPLANATION AND HYPOTHESIS

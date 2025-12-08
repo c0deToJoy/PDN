@@ -1,4 +1,4 @@
-ITERATION 18: tuned_variant14_op_nr_ilp
+ITERATION 18: tuned\_variant14\_op\_nr\_ilp
 ================================================================================
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
@@ -11,7 +11,7 @@ Performance data from CSV files:
 
 Performance data not available in CSV format
 
-Corresponding plot: results/plot_iter_18_tuned_variant14_op_nr_ilp.png
+Corresponding plot: results/plot\_iter\_18\_tuned\_variant14\_op\_nr\_ilp.png
 
 
 3. EXPLANATION AND HYPOTHESIS

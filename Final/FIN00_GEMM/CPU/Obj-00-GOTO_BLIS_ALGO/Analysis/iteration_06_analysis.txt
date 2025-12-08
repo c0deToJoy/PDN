@@ -1,16 +1,16 @@
-ITERATION 6: tuned_variant03_op_block_mc
+ITERATION 6: tuned\_variant03\_op\_block\_mc
 ================================================================================
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Adds BLOCK_MC (m-dimension blocking, default 128) to complete the 3-level cache hierarchy:
+Adds BLOCK\\_MC (m-dimension blocking, default 128) to complete the 3-level cache hierarchy:
 
 ```c
-for( int i1 = 0; i1 < m0; i1 += BLOCK_MC ) {
-  int ib = (i1 + BLOCK_MC <= m0) ? BLOCK_MC : m0 - i1;
+for( int i1 = 0; i1 < m0; i1 += BLOCK\_MC ) {
+  int ib = (i1 + BLOCK\_MC <= m0) ? BLOCK\_MC : m0 - i1;
 ```
 
-Now all three dimensions are blocked: NC for L3, KC for L2, and MC for L1, creating a nested structure where small tiles of C (BLOCK_MC × BLOCK_NC) fit in L1 cache.
+Now all three dimensions are blocked: NC for L3, KC for L2, and MC for L1, creating a nested structure where small tiles of C (BLOCK\\_MC × BLOCK\\_NC) fit in L1 cache.
 
 2. PERFORMANCE ANALYSIS
 --------------------------------------------------------------------------------
@@ -18,12 +18,12 @@ Performance data from CSV files:
 
 Performance data not available in CSV format
 
-Corresponding plot: results/plot_iter_06_tuned_variant03_op_block_mc.png
+Corresponding plot: results/plot\_iter\_06\_tuned\_variant03\_op\_block\_mc.png
 
 
 3. EXPLANATION AND HYPOTHESIS
 --------------------------------------------------------------------------------
-BLOCK_MC adds blocking in the m-dimension (rows of C), creating the full
+BLOCK\\_MC adds blocking in the m-dimension (rows of C), creating the full
 3-level cache hierarchy blocking structure. This ensures the micro-panel
 of C fits in L1 cache while blocks of A and B fit in L2/L3.
 
