@@ -16,7 +16,7 @@ Key structure:
 The baseline serves as a reference point to measure improvements from subsequent
 optimizations like cache blocking, data packing, SIMD, and parallelization.
 
-2. PERFORMANCE
+3. EXPLANATION AND HYPOTHESIS
 --------------------------------------------------------------------------------
 Performance data available from CSV file
 
