@@ -3,33 +3,14 @@ ITERATION 14: tuned_variant10_op_minimize_n_fringe
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Comparing tuned_variant09_op_minimize_m_fringe.c -> tuned_variant10_op_minimize_n_fringe.c
+Similar to iteration 13, but for the n-dimension. BLOCK_NC is tuned to minimize n-fringe cases:
 
-Key changes detected:
-  - BLOCK_NC (n-dimension blocking) introduced/modified
-  - BLOCK_KC (k-dimension blocking) introduced/modified
-  - BLOCK_MR (micro-kernel m blocking) introduced/modified
-  - BLOCK_NR (micro-kernel n blocking) introduced/modified
-  - Data packing routines added/modified
+```c
+int n0_aligned = (n0 / BLOCK_NC) * BLOCK_NC;
+// Minimal n-fringe handling
+```
 
-Diff excerpt (first 100 lines of changes):
---- Obj-00-GOTO_BLIS_ALGO/tuned_variant09_op_minimize_m_fringe.c	2025-12-05 03:05:55.598484631 +0000
-+++ Obj-00-GOTO_BLIS_ALGO/tuned_variant10_op_minimize_n_fringe.c	2025-12-05 03:05:55.598484631 +0000
--      int n0_fringe_start = n0 - (n0%(BLOCK_NC));
-+      // We will reduce the fringe to only include
-+      // what spills out of NR.
-+      int n0_fringe_start = n0 - (n0%(BLOCK_NR));
-+	  int block_nc_remainder = min(BLOCK_NC, n0_fringe_start-j0_o);
-+	  
--		      if (p0 < k0 )
-+		      if (p0 < k0 & j0 < n0 )
--		  for( int j0_i = 0; j0_i < BLOCK_NC; j0_i += BLOCK_NR )
-+		  for( int j0_i = 0; j0_i < block_nc_remainder; j0_i += BLOCK_NR )
--
--		for( int j0_i = 0; j0_i < BLOCK_NC; ++j0_i )
-+		for( int j0_i = 0; j0_i < block_nc_remainder; ++j0_i )
-...
-
+This optimization reduces edge case handling overhead for column-wise partitioning.
 
 2. PERFORMANCE ANALYSIS
 --------------------------------------------------------------------------------

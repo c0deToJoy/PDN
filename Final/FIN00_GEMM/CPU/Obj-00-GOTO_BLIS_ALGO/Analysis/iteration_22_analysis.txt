@@ -3,67 +3,15 @@ ITERATION 22: tuned_variant18_op_avx2_simd
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Comparing tuned_variant17_op_pseudo_simd.c -> tuned_variant18_op_avx2_simd.c
+Replaces pseudo-SIMD with actual AVX2 intrinsics for true vectorization:
 
-Key changes detected:
-  - BLOCK_MR (micro-kernel m blocking) introduced/modified
-  - BLOCK_NR (micro-kernel n blocking) introduced/modified
-  - SIMD/vectorization (AVX2) introduced
-  - OpenMP/threading introduced
+```c
+__m256 a_vec = _mm256_load_ps(a_packed);
+__m256 b_vec = _mm256_load_ps(b_packed);
+__m256 c_vec = _mm256_fmadd_ps(a_vec, b_vec, c_vec);
+```
 
-Diff excerpt (first 100 lines of changes):
---- Obj-00-GOTO_BLIS_ALGO/tuned_variant17_op_pseudo_simd.c	2025-12-05 03:05:55.598484631 +0000
-+++ Obj-00-GOTO_BLIS_ALGO/tuned_variant18_op_avx2_simd.c	2025-12-05 03:05:55.598484631 +0000
-+// For AVX2 and FMA
-+#include <immintrin.h>
-+
-+#if (PAR_VECT_LEN) != 8
-+#error "PAR_VECT_LEN must be 8 for AVX2.\n"
-+#endif
--			float C_micro[BLOCK_NR][BLOCK_MR/PAR_VECT_LEN][PAR_VECT_LEN];
-+			//float C_micro[BLOCK_NR][BLOCK_MR/PAR_VECT_LEN][PAR_VECT_LEN];
-+			__m256 C_micro_v[BLOCK_NR][BLOCK_MR/PAR_VECT_LEN];
--			    #pragma omp simd
--			    for( int i0_r_vid = 0; i0_r_vid <PAR_VECT_LEN; ++i0_r_vid  )
-+			    //#pragma omp simd
-+			    //for( int i0_r_vid = 0; i0_r_vid <PAR_VECT_LEN; ++i0_r_vid  )
--				C_micro[j0_r][i0_r_bid][i0_r_vid]
--				  = 0.0f;
-+				C_micro_v[j0_r][i0_r_bid] = _mm256_set1_ps(0.0f);
--                                #pragma omp simd
--				for( int i0_r_vid = 0; i0_r_vid <PAR_VECT_LEN; ++i0_r_vid  )
-+                                //#pragma omp simd
-+				//for( int i0_r_vid = 0; i0_r_vid <PAR_VECT_LEN; ++i0_r_vid  )
--				    int i0_r = i0_r_bid*(PAR_VECT_LEN) + i0_r_vid;
-+				    int i0_r = i0_r_bid*(PAR_VECT_LEN);
--				    float A_ip = A_dlt[i0_i_bid][p0_i+p0_u][i0_r_bid][i0_r_vid];
--				    float B_pj = B_dlt[j0_i_bid][p0_i+p0_u][j0_r];
-+				    //float A_ip = A_dlt[i0_i_bid][p0_i+p0_u][i0_r_bid][i0_r_vid];
-+				    //float B_pj = B_dlt[j0_i_bid][p0_i+p0_u][j0_r];
-+
-+				    __m256 A_ip_v = _mm256_load_ps(&A_dlt[i0_i_bid][p0_i+p0_u][i0_r_bid][0]);
-+				    __m256 B_pj_v = _mm256_set1_ps(B_dlt[j0_i_bid][p0_i+p0_u][j0_r]);
--				    C_micro[j0_r][i0_r_bid][i0_r_vid] += A_ip*B_pj;
-+				    // C_micro[j0_r][i0_r_bid][i0_r_vid] += A_ip*B_pj;
-+				    C_micro_v[j0_r][i0_r_bid] = _mm256_fmadd_ps( A_ip_v,
-+										 B_pj_v,
-+										 C_micro_v[j0_r][i0_r_bid]);
-+
-+				    
-+				    
--			    // 6 vs 1/2 dozen: if the compiler does this properly, then we should
--			    // see a _mm256_load_ps(...) equivalent if we run
--			    // objdump -d this_file.o 
--			    #pragma omp simd
--			    for( int i0_r_vid = 0; i0_r_vid <PAR_VECT_LEN; ++i0_r_vid  )
--			      {
--				int i0_r = i0_r_bid*(PAR_VECT_LEN) + i0_r_vid;
--
--				int j0 = j0_o + j0_i + j0_r;
--				int i0 = i0_o + i0_i + i0_r;
--
-...
-
+This enables processing 8 single-precision floats per instruction, dramatically improving computational throughput.
 
 2. PERFORMANCE ANALYSIS
 --------------------------------------------------------------------------------

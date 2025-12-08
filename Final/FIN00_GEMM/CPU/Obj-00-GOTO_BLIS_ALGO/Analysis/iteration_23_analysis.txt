@@ -3,24 +3,18 @@ ITERATION 23: tuned_variant19_op_data_dist_1d_sharedmem
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Comparing tuned_variant18_op_avx2_simd.c -> tuned_variant19_op_data_dist_1d_sharedmem.c
+Introduces OpenMP shared-memory parallelism with 1D work distribution:
 
-Key changes detected:
-  - BLOCK_NC (n-dimension blocking) introduced/modified
-  - SIMD/vectorization (AVX2) introduced
-  - OpenMP/threading introduced
+```c
+#pragma omp parallel
+{
+  int tid = omp_get_thread_num();
+  int num_threads = omp_get_num_threads();
+  // Distribute nc-blocks across threads
+  for (int j1 = tid * BLOCK_NC; j1 < n0; j1 += num_threads * BLOCK_NC) {
+```
 
-Diff excerpt (first 100 lines of changes):
---- Obj-00-GOTO_BLIS_ALGO/tuned_variant18_op_avx2_simd.c	2025-12-05 03:05:55.598484631 +0000
-+++ Obj-00-GOTO_BLIS_ALGO/tuned_variant19_op_data_dist_1d_sharedmem.c	2025-12-05 03:05:55.598484631 +0000
--#endif /* BLOCK_KU */
-+#endif /* PAR_VECT_LEN */
-+#ifndef PAR_COL_THREADS
-+#define PAR_COL_THREADS 2
-+#endif /* PAR_COL_THREADS */
-+      #pragma omp parallel for num_threads(PAR_COL_THREADS)
-...
-
+Threads work on different column panels independently, enabling multi-core parallelism.
 
 2. PERFORMANCE ANALYSIS
 --------------------------------------------------------------------------------

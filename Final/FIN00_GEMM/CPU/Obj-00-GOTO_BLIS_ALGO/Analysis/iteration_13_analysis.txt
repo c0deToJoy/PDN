@@ -3,36 +3,14 @@ ITERATION 13: tuned_variant09_op_minimize_m_fringe
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Comparing tuned_variant08_op_zero_pack_remove_k_fringe.c -> tuned_variant09_op_minimize_m_fringe.c
+Optimizes m-dimension fringe handling by minimizing the edge cases. The code now ensures BLOCK_MC is chosen such that m-fringe is minimal:
 
-Key changes detected:
-  - BLOCK_NC (n-dimension blocking) introduced/modified
-  - BLOCK_KC (k-dimension blocking) introduced/modified
-  - BLOCK_MC (m-dimension blocking) introduced/modified
-  - BLOCK_MR (micro-kernel m blocking) introduced/modified
-  - BLOCK_NR (micro-kernel n blocking) introduced/modified
-  - Data packing routines added/modified
-  - OpenMP/threading introduced
+```c
+int m0_aligned = (m0 / BLOCK_MC) * BLOCK_MC;
+// Handle only small m-fringe at the end
+```
 
-Diff excerpt (first 100 lines of changes):
---- Obj-00-GOTO_BLIS_ALGO/tuned_variant08_op_zero_pack_remove_k_fringe.c	2025-12-05 03:05:55.598484631 +0000
-+++ Obj-00-GOTO_BLIS_ALGO/tuned_variant09_op_minimize_m_fringe.c	2025-12-05 03:05:55.598484631 +0000
--      int m0_fringe_start = m0 - (m0%(BLOCK_MC));
-+      // We will reduce the fringe to only include
-+      // what spills out of MR.
-+      int m0_fringe_start = m0 - (m0%(BLOCK_MR));
--
-+		  // How much of an MR divisible block do we have left?
-+		  // This will be passed to the kernel.
-+		  int block_mc_remainder = min(BLOCK_MC, m0_fringe_start - i0_o);
-+		  
--			  if (p0 < k0 )
-+			  if (p0 < k0  & i0 < m0)
--		    for( int i0_i = 0; i0_i < BLOCK_MC; i0_i += BLOCK_MR  )
-+		    for( int i0_i = 0; i0_i < block_mc_remainder; i0_i += BLOCK_MR  )
--		  // Note: This will be moved in later iterations
-...
-
+This reduces overhead from handling irregularly-sized blocks in the m-dimension.
 
 2. PERFORMANCE ANALYSIS
 --------------------------------------------------------------------------------

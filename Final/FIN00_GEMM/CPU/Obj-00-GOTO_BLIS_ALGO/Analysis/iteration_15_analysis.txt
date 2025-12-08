@@ -3,21 +3,13 @@ ITERATION 15: tuned_variant11_op_minimize_kc_zerowork
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Comparing tuned_variant10_op_minimize_n_fringe.c -> tuned_variant11_op_minimize_kc_zerowork.c
+Eliminates unnecessary zero work in the k-dimension by skipping blocks that don't contribute:
 
-Key changes detected:
-  - BLOCK_KC (k-dimension blocking) introduced/modified
-  - BLOCK_MR (micro-kernel m blocking) introduced/modified
-  - BLOCK_NR (micro-kernel n blocking) introduced/modified
+```c
+if (pb == 0) continue; // Skip zero-sized k-blocks
+```
 
-Diff excerpt (first 100 lines of changes):
---- Obj-00-GOTO_BLIS_ALGO/tuned_variant10_op_minimize_n_fringe.c	2025-12-05 03:05:55.598484631 +0000
-+++ Obj-00-GOTO_BLIS_ALGO/tuned_variant11_op_minimize_kc_zerowork.c	2025-12-05 03:05:55.598484631 +0000
--			for( int p0_i = 0; p0_i < BLOCK_KC; ++p0_i )
-+			for( int p0_i = 0; p0_i < block_kc_remainder; ++p0_i )
-+
-...
-
+This optimization avoids packing and computing empty blocks when k is not evenly divisible by BLOCK_KC.
 
 2. PERFORMANCE ANALYSIS
 --------------------------------------------------------------------------------

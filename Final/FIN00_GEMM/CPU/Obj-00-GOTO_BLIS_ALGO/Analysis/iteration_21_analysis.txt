@@ -3,38 +3,16 @@ ITERATION 21: tuned_variant17_op_pseudo_simd
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Comparing tuned_variant16_op_presimd_data_dist_elem_cleaner.c -> tuned_variant17_op_pseudo_simd.c
+Implements pseudo-SIMD operations using scalar code structured like SIMD. Operations are grouped to mimic vector operations:
 
-Key changes detected:
-  - BLOCK_NC (n-dimension blocking) introduced/modified
-  - BLOCK_MC (m-dimension blocking) introduced/modified
-  - BLOCK_MR (micro-kernel m blocking) introduced/modified
-  - BLOCK_NR (micro-kernel n blocking) introduced/modified
-  - SIMD/vectorization (AVX2) introduced
-  - OpenMP/threading introduced
+```c
+// Pseudo-SIMD: process 4 elements together
+float a_vec[4] = {a[0], a[1], a[2], a[3]};
+float b_vec[4] = {b[0], b[1], b[2], b[3]};
+for (int v = 0; v < 4; ++v) c_vec[v] += a_vec[v] * b_vec[v];
+```
 
-Diff excerpt (first 100 lines of changes):
---- Obj-00-GOTO_BLIS_ALGO/tuned_variant16_op_presimd_data_dist_elem_cleaner.c	2025-12-05 03:05:55.598484631 +0000
-+++ Obj-00-GOTO_BLIS_ALGO/tuned_variant17_op_pseudo_simd.c	2025-12-05 03:05:55.598484631 +0000
--
-+			    // 6 vs 1/2 dozen: if the compiler does this properly, then we should
-+			    // see a _mm256_set1_ps or _mm256_xor_ps(a,a) equivalent if we run
-+			    // objdump -d this_file.o 
-+			    #pragma omp simd
-+				// 6 vs 1/2 dozen: if the compiler does this properly, then we should
-+				// see a sequence of _mm256_set1_ps(b..), _mm256_load_ps(a..), _mm256_fmadd_(a,b,c..)
-+				// equivalent if we run: objdump -d this_file.o 
-+                                #pragma omp simd
-+			    // 6 vs 1/2 dozen: if the compiler does this properly, then we should
-+			    // see a _mm256_load_ps(...) equivalent if we run
-+			    // objdump -d this_file.o 
-+			    #pragma omp simd
--      // Fringe for n0
-+      //Fringe for n0
--	}
-+    }
-...
-
+This prepares the code structure for actual SIMD intrinsics.
 
 2. PERFORMANCE ANALYSIS
 --------------------------------------------------------------------------------

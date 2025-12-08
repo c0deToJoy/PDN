@@ -3,20 +3,7 @@ ITERATION 18: tuned_variant14_op_nr_ilp
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Comparing tuned_variant13_op_mr_ilp.c -> tuned_variant14_op_nr_ilp.c
-
-Key changes detected:
-  - BLOCK_MR (micro-kernel m blocking) introduced/modified
-  - BLOCK_NR (micro-kernel n blocking) introduced/modified
-
-Diff excerpt (first 100 lines of changes):
---- Obj-00-GOTO_BLIS_ALGO/tuned_variant13_op_mr_ilp.c	2025-12-05 03:05:55.598484631 +0000
-+++ Obj-00-GOTO_BLIS_ALGO/tuned_variant14_op_nr_ilp.c	2025-12-05 03:05:55.598484631 +0000
-+			#pragma unroll BLOCK_NR
-+			    #pragma unroll BLOCK_NR
-+			#pragma unroll BLOCK_NR
-...
-
+Unrolls the n-dimension (NR) loop similar to iteration 17's MR unrolling. The micro-kernel now has fully unrolled MR×NR computation, maximizing instruction-level parallelism and register usage. Each element of the 4×4 result tile is computed explicitly without loops.
 
 2. PERFORMANCE ANALYSIS
 --------------------------------------------------------------------------------

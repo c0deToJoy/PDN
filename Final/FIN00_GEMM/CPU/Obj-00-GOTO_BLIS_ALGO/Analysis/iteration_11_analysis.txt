@@ -3,71 +3,15 @@ ITERATION 11: tuned_variant07_op_pack_dlt_A
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Comparing tuned_variant06_op_pack_dlt_B.c -> tuned_variant07_op_pack_dlt_A.c
+Adds data packing for matrix A, complementing the B packing from iteration 10:
 
-Key changes detected:
-  - BLOCK_NC (n-dimension blocking) introduced/modified
-  - BLOCK_KC (k-dimension blocking) introduced/modified
-  - BLOCK_MC (m-dimension blocking) introduced/modified
-  - BLOCK_MR (micro-kernel m blocking) introduced/modified
-  - BLOCK_NR (micro-kernel n blocking) introduced/modified
-  - Data packing routines added/modified
-  - SIMD/vectorization (AVX2) introduced
-  - OpenMP/threading introduced
+```c
+float *A_packed = (float*)malloc(pb * ib * sizeof(float));
+pack_matrix_A(pb, ib, &A_distributed[i1*cs_A + p1*rs_A], 
+              rs_A, cs_A, A_packed);
+```
 
-Diff excerpt (first 100 lines of changes):
---- Obj-00-GOTO_BLIS_ALGO/tuned_variant06_op_pack_dlt_B.c	2025-12-05 03:05:55.598484631 +0000
-+++ Obj-00-GOTO_BLIS_ALGO/tuned_variant07_op_pack_dlt_A.c	2025-12-05 03:05:55.598484631 +0000
--  
-+
--      
-+      int num_i0_i_blocks = (BLOCK_MC) / (BLOCK_MR);
-+
--	
-+
--	      
-+
--		// KERNEL: Performs a MCxNCxKC matrix-matrix multiplication
--		for( int j0_i = 0; j0_i < BLOCK_NC; j0_i += BLOCK_NR )
-+		{
-+
-+		  // We will pack and perform a Data layout transformation
-+		  // on a MCxKC block of A. Like the packing of B, this work
-+		  // will be amortized by a lot of computation.
-+		  // A_dlt[i0_i/MR][p0_i][i0_r]
-+		  float A_dlt[num_i0_i_blocks][BLOCK_KC][BLOCK_MR];
--		    // MICRO-KERNEL: Performs a MRxNRxKC matrix-matrix multiplication
--		    {
--		      // We are going to keep a small NRxMR block of C's updates
--		      // then write them back to memory when we are done.
--		      float C_micro[BLOCK_NR][BLOCK_MR];
--		      
--		      // Zero out C_micro
--		      // C_micro[][] = 0
--		      for( int j0_r = 0; j0_r < BLOCK_NR; ++j0_r  )
--			for( int i0_r = 0; i0_r < BLOCK_MR; ++i0_r  )
--			  {
--			    C_micro[j0_r][i0_r] = 0.0f;
--			  }
--
--		      // Rank-K update (lots of very parallel outer-products)
--		      // This is where all of the work happens and we need
--		      // to use SIMD to get the peak floating point performance
--		      // however, the current layout for A and B is not amenable
--		      // to doing this efficiently. We will have to fix that
--		      // later. We will also need to partially unroll KC for ILP,
--		      // but that will also happen later.
--		      //
--		      // C_micro [ir][jr] += A_{ir,p} * B_{p,jr}
--		      for( int p0_i = 0; p0_i < BLOCK_KC; ++p0_i )
-+		    for( int p0_i = 0; p0_i < BLOCK_KC; ++p0_i )
-+		      for( int i0_r = 0; i0_r < BLOCK_MR; ++i0_r  )
-+			{
-+			  int i0 = i0_o + i0_i + i0_r;
-+			  int p0 = p0_o + p0_i;
-+			  int i0_i_bid = i0_i/(BLOCK_MR);
-...
-
+With both A and B packed into contiguous layouts, the micro-kernel achieves near-optimal memory access patterns.
 
 2. PERFORMANCE ANALYSIS
 --------------------------------------------------------------------------------

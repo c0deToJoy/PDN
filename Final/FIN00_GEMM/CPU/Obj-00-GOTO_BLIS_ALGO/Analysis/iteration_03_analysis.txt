@@ -3,67 +3,15 @@ ITERATION 3: tuned_variant000_index_set_split
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Comparing tuned_variant00_op.c -> tuned_variant000_index_set_split.c
+This iteration introduces explicit fringe case handling with three block size macros (BLOCK_NC=192, BLOCK_KC=128, BLOCK_MC=128). The code splits index ranges into "steady state" regions that are multiples of block sizes, and "fringe" regions for remainders:
 
-Key changes detected:
-  - BLOCK_NC (n-dimension blocking) introduced/modified
-  - BLOCK_KC (k-dimension blocking) introduced/modified
-  - BLOCK_MC (m-dimension blocking) introduced/modified
-  - OpenMP/threading introduced
+```c
+int n0_fringe_start = n0 - (n0%(BLOCK_NC));
+int k0_fringe_start = k0 - (k0%(BLOCK_KC));
+int m0_fringe_start = m0 - (m0%(BLOCK_MC));
+```
 
-Diff excerpt (first 100 lines of changes):
---- Obj-00-GOTO_BLIS_ALGO/tuned_variant00_op.c	2025-12-05 03:05:55.598484631 +0000
-+++ Obj-00-GOTO_BLIS_ALGO/tuned_variant000_index_set_split.c	2025-12-05 03:05:55.598484631 +0000
--
--
-+/*
-+ C-Pre-Processor (cpp) macros for blocksizes will allows us
-+ to have constant values at compile time that we can either
-+ set here, or pass as a compiler flag "-DBLOCK_NC=512".
-+*/
-+
-+#ifndef BLOCK_NC
-+#define BLOCK_NC 192
-+#endif /* BLOCK_NC */
-+
-+#ifndef BLOCK_KC
-+#define BLOCK_KC 128
-+#endif /* BLOCK_KC */
-+
-+#ifndef BLOCK_MC
-+#define BLOCK_MC 128
-+#endif /* BLOCK_MC */
--      for( int j0 = 0; j0 < n0; ++j0 )
-+      int n0_fringe_start = n0 - (n0%(BLOCK_NC));
-+      int k0_fringe_start = k0 - (k0%(BLOCK_KC));
-+      int m0_fringe_start = m0 - (m0%(BLOCK_MC));
-+
-+      // Steady State
-+      for( int j0 = 0; j0 < n0_fringe_start; ++j0 )
--	  for( int p0 = 0; p0 < k0; ++p0 )
-+	  // Steady State
-+	  for( int p0 = 0; p0 < k0_fringe_start; ++p0 )
--	      for( int i0 = 0; i0 < m0; ++i0 )
-+	      // Steady State
-+	      for( int i0 = 0; i0 < m0_fringe_start; ++i0 )
-+		{
-+		  float A_ip = A_distributed[i0 * cs_A + p0 * rs_A];
-+		  float B_pj = B_distributed[p0 * cs_B + j0 * rs_B];
-+
-+		  C_distributed[i0 * cs_C + j0 * rs_C]  += A_ip*B_pj;
-+		}
-+	      
-+	      // Fringe for m0
-+	      for( int i0 = m0_fringe_start; i0 < m0; ++i0 )
-+
-+	    }
-+	  // Fringe for k0
-+	  for( int p0 = k0_fringe_start; p0 < k0; ++p0 )
-+	    for( int i0 = 0; i0 < m0; ++i0 )
-+	      {
-+		float A_ip = A_distributed[i0 * cs_A + p0 * rs_A];
-...
-
+Separate loops handle the steady-state (0 to fringe_start) and fringe (fringe_start to dimension size) computations, improving code clarity and potentially reducing branching overhead in the main loop.
 
 2. PERFORMANCE ANALYSIS
 --------------------------------------------------------------------------------

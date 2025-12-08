@@ -3,51 +3,16 @@ ITERATION 19: tuned_variant15_op_presimd_data_dist_elem
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Comparing tuned_variant14_op_nr_ilp.c -> tuned_variant15_op_presimd_data_dist_elem.c
+Prepares data layout for SIMD by organizing elements in a SIMD-friendly pattern:
 
-Key changes detected:
-  - BLOCK_NC (n-dimension blocking) introduced/modified
-  - BLOCK_KC (k-dimension blocking) introduced/modified
-  - BLOCK_MC (m-dimension blocking) introduced/modified
-  - BLOCK_MR (micro-kernel m blocking) introduced/modified
-  - BLOCK_NR (micro-kernel n blocking) introduced/modified
-  - Data packing routines added/modified
-  - SIMD/vectorization (AVX2) introduced
-  - OpenMP/threading introduced
+```c
+// Pack data in vectors of 4 elements (for future SIMD)
+for (int i = 0; i < MR; i += SIMD_WIDTH) {
+  // Group consecutive elements
+}
+```
 
-Diff excerpt (first 100 lines of changes):
---- Obj-00-GOTO_BLIS_ALGO/tuned_variant14_op_nr_ilp.c	2025-12-05 03:05:55.598484631 +0000
-+++ Obj-00-GOTO_BLIS_ALGO/tuned_variant15_op_presimd_data_dist_elem.c	2025-12-05 03:05:55.598484631 +0000
-+#ifndef PAR_VECT_LEN
-+#define PAR_VECT_LEN 8
-+#endif /* BLOCK_KU */
-+
-+
-+
-+#if (BLOCK_MR) % (PAR_VECT_LEN) != 0
-+#error "PAR_VECT_LEN must be a factor of BLOCK_MR.\n"
-+#endif
-+
--		  float A_dlt[num_i0_i_blocks][BLOCK_KC][BLOCK_MR];
-+		  float A_dlt[num_i0_i_blocks][BLOCK_KC][BLOCK_MR/PAR_VECT_LEN][PAR_VECT_LEN];
--			    A_dlt[i0_i_bid][p0_i][i0_r] =
-+			    A_dlt[i0_i_bid][p0_i][i0_r/PAR_VECT_LEN][i0_r%PAR_VECT_LEN] =
--			    A_dlt[i0_i_bid][p0_i][i0_r] = 0.0f;
-+			    A_dlt[i0_i_bid][p0_i][i0_r/PAR_VECT_LEN][i0_r%PAR_VECT_LEN]
-+			      = 0.0f;
--			float C_micro[BLOCK_NR][BLOCK_MR];
-+			float C_micro[BLOCK_NR][BLOCK_MR/PAR_VECT_LEN][PAR_VECT_LEN];
--			      C_micro[j0_r][i0_r] = 0.0f;
-+			      C_micro[j0_r][i0_r/PAR_VECT_LEN][i0_r%PAR_VECT_LEN]
-+				= 0.0f;
--				  float A_ip = A_dlt[i0_i_bid][p0_i+p0_u][i0_r];
-+				  float A_ip = A_dlt[i0_i_bid][p0_i+p0_u][i0_r/PAR_VECT_LEN][i0_r%PAR_VECT_LEN];
--				  C_micro[j0_r][i0_r] += A_ip*B_pj;
-+				  C_micro[j0_r][i0_r/PAR_VECT_LEN][i0_r%PAR_VECT_LEN] += A_ip*B_pj;
--			      C_distributed[i0 * cs_C + j0 * rs_C] += C_micro[j0_r][i0_r];
-+			      C_distributed[i0 * cs_C + j0 * rs_C] += C_micro[j0_r][i0_r/PAR_VECT_LEN][i0_r%PAR_VECT_LEN];
-...
-
+This reorganization sets up the data so SIMD instructions can load/operate on multiple elements simultaneously.
 
 2. PERFORMANCE ANALYSIS
 --------------------------------------------------------------------------------

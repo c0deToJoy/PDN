@@ -3,20 +3,17 @@ ITERATION 17: tuned_variant13_op_mr_ilp
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Comparing tuned_variant12_op_kunroll_with_overrun_for_ilp.c -> tuned_variant13_op_mr_ilp.c
+Unrolls the m-dimension (MR) loop in the micro-kernel to improve instruction-level parallelism:
 
-Key changes detected:
-  - BLOCK_MR (micro-kernel m blocking) introduced/modified
-  - BLOCK_NR (micro-kernel n blocking) introduced/modified
+```c
+// Explicitly unroll all MR rows
+c00 += a0 * b0; c01 += a0 * b1; c02 += a0 * b2; c03 += a0 * b3;
+c10 += a1 * b0; c11 += a1 * b1; c12 += a1 * b2; c13 += a1 * b3;
+c20 += a2 * b0; c21 += a2 * b1; c22 += a2 * b2; c23 += a2 * b3;
+c30 += a3 * b0; c31 += a3 * b1; c32 += a3 * b2; c33 += a3 * b3;
+```
 
-Diff excerpt (first 100 lines of changes):
---- Obj-00-GOTO_BLIS_ALGO/tuned_variant12_op_kunroll_with_overrun_for_ilp.c	2025-12-05 03:05:55.598484631 +0000
-+++ Obj-00-GOTO_BLIS_ALGO/tuned_variant13_op_mr_ilp.c	2025-12-05 03:05:55.598484631 +0000
-+			  #pragma unroll BLOCK_MR
-+			      #pragma unroll BLOCK_MR
-+			  #pragma unroll BLOCK_MR
-...
-
+This exposes all MR×NR operations to the compiler for better scheduling.
 
 2. PERFORMANCE ANALYSIS
 --------------------------------------------------------------------------------
