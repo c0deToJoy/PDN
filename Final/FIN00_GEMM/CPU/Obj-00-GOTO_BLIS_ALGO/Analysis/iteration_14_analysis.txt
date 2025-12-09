@@ -3,32 +3,73 @@ ITERATION 14: tuned\_variant10\_op\_minimize\_n\_fringe
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Similar to iteration 13, but for the n-dimension. BLOCK\\_NC is tuned to minimize n-fringe cases:
+Minimizes n-dimension fringe by computing fringe at BLOCK\_NR resolution instead of BLOCK\_NC, and adds zero-padding for n-dimension boundary in B packing:
 
 ```c
-int n0\_aligned = (n0 / BLOCK\_NC) * BLOCK\_NC;
-// Minimal n-fringe handling
+// Changed from n0 - (n0\%(BLOCK\_NC))
+int n0\_fringe\_start = n0 - (n0\%(BLOCK\_NR));
+
+for( int j0\_o = 0; j0\_o < n0\_fringe\_start; j0\_o += BLOCK\_NC )
+  {
+    int block\_nc\_remainder = min(BLOCK\_NC, n0\_fringe\_start-j0\_o);
+    
+    // Pack B with zero-padding for k and n fringes
+    float B\_dlt[num\_j0\_i\_blocks][BLOCK\_KC][BLOCK\_NR];
+    for( int j0\_i = 0; j0\_i < BLOCK\_NC; j0\_i += BLOCK\_NR )
+      for( int p0\_i = 0; p0\_i < BLOCK\_KC; ++p0\_i )
+        for( int j0\_r = 0; j0\_r < BLOCK\_NR; ++j0\_r  )
+        {
+          int j0 = j0\_o + j0\_i + j0\_r;
+          int p0 = p0\_o + p0\_i;
+          int j0\_i\_bid = j0\_i/(BLOCK\_NR);
+          
+          // Zero-pad if beyond k or n dimensions
+          if (p0 < k0 \& j0 < n0 )
+            B\_dlt[j0\_i\_bid][p0\_i][j0\_r] =
+              B\_distributed[p0 * cs\_B + j0 * rs\_B];
+          else
+            B\_dlt[j0\_i\_bid][p0\_i][j0\_r] = 0.0f;
+        }
+    
+    // Kernel loop uses block\_nc\_remainder
+    for( int j0\_i = 0; j0\_i < block\_nc\_remainder; j0\_i += BLOCK\_NR )
+      for( int i0\_i = 0; i0\_i < block\_mc\_remainder; i0\_i += BLOCK\_MR  )
+        // ... micro-kernel computation
+  }
 ```
 
-This optimization reduces edge case handling overhead for column-wise partitioning.
+This reduces the n-fringe to only what spills beyond BLOCK\_NR boundaries rather than BLOCK\_NC.
 
 2. PERFORMANCE ANALYSIS
 --------------------------------------------------------------------------------
 Performance data from CSV files:
 
-Performance data not available in CSV format
+Variant 09 (iteration 13): 128x128x128 = 20.14 GFLOPs
+Variant 10 (iteration 14): 128x128x128 = 5.63 GFLOPs
 
 Corresponding plot: results/plot\_iter\_14\_tuned\_variant10\_op\_minimize\_n\_fringe.png
 
 
 3. EXPLANATION AND HYPOTHESIS
 --------------------------------------------------------------------------------
-Fringe case optimization reduces overhead from handling edge cases.
-By minimizing branching and padding, the code achieves more consistent
-performance across different matrix sizes.
+**Catastrophic Performance Regression**: CSV data shows a devastating ~73\% slowdown
+(e.g., 128x128x128: 20.14 \textrightarrow 5.63 GFLOPs). Reducing n-fringe from BLOCK\_NC to 
+BLOCK\_NR resolution fundamentally breaks the micro-kernel scheduling and cache blocking 
+strategy.
 
-To test this hypothesis:
-- Profile cache miss rates (perf stat -e cache-misses,cache-references)
-- Analyze instruction mix and IPC (instructions per cycle)
-- Vary block sizes to find optimal values for target architecture
-- Compare performance across different matrix sizes and shapes
+Critical issue: Changing n0\_fringe\_start from BLOCK\_NC to BLOCK\_NR causes the outer
+j0\_o loop to iterate BLOCK\_NC times per outer loop (e.g., 192 iterations with 16-element
+fringes), while the kernel loop j0\_i now steps by BLOCK\_NR and is bounded by block\_nc\_remainder.
+This causes the kernel to process incomplete BLOCK\_NC tiles with variable iteration counts,
+destroying:
+1. Cache blocking efficiency (L3 miss rate skyrockets)
+2. Micro-kernel register reuse (misaligned access patterns)
+3. Compiler loop unrolling opportunities (variable iteration counts prevent optimization)
+
+This optimization violates the nested blocking hierarchy established in iterations 6-8.
+
+To recover performance:
+- Revert n0\_fringe\_start to n0 - (n0\%(BLOCK\_NC)) immediately
+- Do not minimize n-fringe at BLOCK\_NR resolution; maintain BLOCK\_NC as the outermost steady-state block
+- Revisit n-fringe minimization only after SIMD vectorization (iteration 20+) can fully exploit it
+- This serves as a cautionary lesson: the cache-blocking hierarchy has strict requirements

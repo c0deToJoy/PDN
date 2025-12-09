@@ -3,33 +3,93 @@ ITERATION 22: tuned\_variant18\_op\_avx2\_simd
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Replaces pseudo-SIMD with actual AVX2 intrinsics for true vectorization:
+Replaces pragma-driven vectorization with explicit AVX2 intrinsics. Instead of relying on the compiler to generate vector instructions from `\#pragma omp simd`, now explicitly calls `\_mm256\_*` functions for load, multiply, accumulate, and store operations. C\_micro is now `\_\_m256 C\_micro\_v[BLOCK\_NR][BLOCK\_MR/PAR\_VECT\_LEN]` (vector registers instead of scalar arrays).
 
 ```c
-\_\_m256 a\_vec = \_mm256\_load\_ps(a\_packed);
-\_\_m256 b\_vec = \_mm256\_load\_ps(b\_packed);
-\_\_m256 c\_vec = \_mm256\_fmadd\_ps(a\_vec, b\_vec, c\_vec);
-```
+// Vector accumulator array (4-wide AVX2)
+\_\_m256 C\_micro\_v[BLOCK\_NR][BLOCK\_MR/PAR\_VECT\_LEN];
 
-This enables processing 8 single-precision floats per instruction, dramatically improving computational throughput.
+// Initialize with vector zero
+\#pragma unroll BLOCK\_NR
+for( int j0\_r = 0; j0\_r < BLOCK\_NR; ++j0\_r  )
+  \#pragma unroll ((BLOCK\_MR)/(PAR\_VECT\_LEN))
+  for( int i0\_r\_bid = 0; i0\_r\_bid < BLOCK\_MR/(PAR\_VECT\_LEN); ++i0\_r\_bid  )
+    {
+      C\_micro\_v[j0\_r][i0\_r\_bid] = \_mm256\_set1\_ps(0.0f);
+    }
+
+// Rank-K update with vector FMA
+for( int p0\_i = 0; p0\_i < block\_kc\_remainder; p0\_i += BLOCK\_KU )
+  \#pragma unroll BLOCK\_KU
+  for( int p0\_u = 0; p0\_u < BLOCK\_KU; ++ p0\_u )
+    \#pragma unroll BLOCK\_NR
+    for( int j0\_r = 0; j0\_r < BLOCK\_NR; ++j0\_r )
+      \#pragma unroll ((BLOCK\_MR)/(PAR\_VECT\_LEN))
+      for( int i0\_r\_bid = 0; i0\_r\_bid < BLOCK\_MR/(PAR\_VECT\_LEN); ++i0\_r\_bid  )
+        {
+          int j0\_i\_bid = j0\_i/(BLOCK\_NR);
+          int i0\_i\_bid = i0\_i/(BLOCK\_MR);
+
+          // Load 4 A elements, broadcast 1 B element
+          \_\_m256 A\_ip\_v = \_mm256\_load\_ps(\&A\_dlt[i0\_i\_bid][p0\_i+p0\_u][i0\_r\_bid][0]);
+          \_\_m256 B\_pj\_v = \_mm256\_set1\_ps(B\_dlt[j0\_i\_bid][p0\_i+p0\_u][j0\_r]);
+
+          // Vector FMA: C = A*B + C
+          C\_micro\_v[j0\_r][i0\_r\_bid] = \_mm256\_fmadd\_ps( A\_ip\_v,
+                                           B\_pj\_v,
+                                           C\_micro\_v[j0\_r][i0\_r\_bid]);
+        }
+
+// Write-back from vector to scalar C
+\#pragma unroll BLOCK\_NR
+for( int j0\_r = 0; j0\_r < BLOCK\_NR; ++j0\_r  )
+  \#pragma unroll ((BLOCK\_MR)/(PAR\_VECT\_LEN))
+  for( int i0\_r\_bid = 0; i0\_r\_bid < BLOCK\_MR/(PAR\_VECT\_LEN); ++i0\_r\_bid  )
+    {
+      float cur\_row\_sub\_vect[PAR\_VECT\_LEN];
+      \_mm256\_storeu\_ps(cur\_row\_sub\_vect, C\_micro\_v[j0\_r][i0\_r\_bid]);
+
+      \#pragma omp simd
+      for( int i0\_r\_vid = 0; i0\_r\_vid < PAR\_VECT\_LEN; ++i0\_r\_vid  )
+        {
+          int i0\_r = i0\_r\_bid*(PAR\_VECT\_LEN) + i0\_r\_vid;
+          int j0 = j0\_o + j0\_i + j0\_r;
+          int i0 = i0\_o + i0\_i + i0\_r;
+
+          C\_distributed[i0 * cs\_C + j0 * rs\_C] += cur\_row\_sub\_vect[i0\_r\_vid];
+        }
+    }
+```
 
 2. PERFORMANCE ANALYSIS
 --------------------------------------------------------------------------------
-Performance data from CSV files:
-
-Performance data not available in CSV format
+Variant 17 (iteration 21 - OpenMP SIMD): 128x128x128 = 68.16 GFLOPs
+Variant 18 (iteration 22 - AVX2 intrinsics): 128x128x128 = 60.25 GFLOPs (-11.6\% regression)
 
 Corresponding plot: results/plot\_iter\_22\_tuned\_variant18\_op\_avx2\_simd.png
 
 
 3. EXPLANATION AND HYPOTHESIS
 --------------------------------------------------------------------------------
-SIMD vectorization using AVX2 intrinsics enables processing multiple data
-elements in parallel (4-8 doubles per instruction). This dramatically
-increases computational throughput for floating-point operations.
+**Unexpected Performance Regression**: CSV data shows -11.6\% regression (68.16 \textrightarrow 60.25 GFLOPs) despite explicit AVX2 intrinsics being more direct than pragma-driven vectorization. This is counterintuitive because explicit `\_mm256\_fmadd\_ps()` should be at least as fast as pragma directives.
 
-To test this hypothesis:
-- Profile cache miss rates (perf stat -e cache-misses,cache-references)
-- Analyze instruction mix and IPC (instructions per cycle)
-- Vary block sizes to find optimal values for target architecture
-- Compare performance across different matrix sizes and shapes
+Hypothesis for regression:
+1. Write-back overhead: explicit intrinsics version stores vector results to temporary scalar array (cur\_row\_sub\_vect) before scattering to C\_distributed, adding memory operations
+2. Pragma-driven version may receive better compiler optimization and register allocation
+3. Vector load alignment: `\_mm256\_load\_ps()` requires 32-byte alignment; if data is misaligned, performance degrades significantly
+4. Store operation inefficiency: `\_mm256\_storeu\_ps()` (unaligned store) is slower than aligned operations
+
+Key insight: Despite regression vs. iteration 21, iteration 22 still achieves 60.25 GFLOPs, which is:
+- 2.9x higher than iteration 20 (7.30 GFLOPs)
+- 8.25x higher than iteration 13 baseline (7.30 GFLOPs)
+- Shows that SIMD (whether pragma or intrinsics) provides massive speedup over scalar code
+
+Impressions from comparison:
+- `\#pragma omp simd` is superior for this code pattern because compiler can optimize globally
+- Explicit intrinsics provide less flexibility for the optimizer
+- Store-to-accumulate pattern is inefficient; should instead use vectorized C layout
+
+To recover performance:
+- Revert to pragma-driven vectorization (iteration 21), or
+- Redesign C\_distributed to use vector storage, eliminating write-back scatter cost
+- Profile register usage and L1 cache behavior to confirm bottleneck

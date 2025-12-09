@@ -3,14 +3,42 @@ ITERATION 13: tuned\_variant09\_op\_minimize\_m\_fringe
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Optimizes m-dimension fringe handling by minimizing the edge cases. The code now ensures BLOCK\\_MC is chosen such that m-fringe is minimal:
+Minimizes m-dimension fringe by computing fringe at BLOCK\_MR resolution instead of BLOCK\_MC, and uses zero-padding in A packing to handle edge cases:
 
 ```c
-int m0\_aligned = (m0 / BLOCK\_MC) * BLOCK\_MC;
-// Handle only small m-fringe at the end
+// Changed from m0 - (m0\%(BLOCK\_MC))
+int m0\_fringe\_start = m0 - (m0\%(BLOCK\_MR));
+
+for( int i0\_o = 0; i0\_o < m0\_fringe\_start; i0\_o += BLOCK\_MC )
+  {
+    int block\_mc\_remainder = min(BLOCK\_MC, m0\_fringe\_start - i0\_o);
+    
+    // Pack A with zero-padding for both k and m fringes
+    float A\_dlt[num\_i0\_i\_blocks][BLOCK\_KC][BLOCK\_MR];
+    for( int i0\_i = 0; i0\_i < BLOCK\_MC; i0\_i += BLOCK\_MR  )
+      for( int p0\_i = 0; p0\_i < BLOCK\_KC; ++p0\_i )
+        for( int i0\_r = 0; i0\_r < BLOCK\_MR; ++i0\_r  )
+        {
+          int i0 = i0\_o + i0\_i + i0\_r;
+          int p0 = p0\_o + p0\_i;
+          int i0\_i\_bid = i0\_i/(BLOCK\_MR);
+          
+          // Zero-pad if beyond k or m dimensions
+          if (p0 < k0 \& i0 < m0)
+            A\_dlt[i0\_i\_bid][p0\_i][i0\_r] =
+              A\_distributed[i0 * cs\_A + p0 * rs\_A];
+          else
+            A\_dlt[i0\_i\_bid][p0\_i][i0\_r] = 0.0f;
+        }
+    
+    // Kernel loop uses block\_mc\_remainder
+    for( int j0\_i = 0; j0\_i < BLOCK\_NC; j0\_i += BLOCK\_NR )
+      for( int i0\_i = 0; i0\_i < block\_mc\_remainder; i0\_i += BLOCK\_MR  )
+        // ... micro-kernel computation
+  }
 ```
 
-This reduces overhead from handling irregularly-sized blocks in the m-dimension.
+This reduces the m-fringe to only what spills beyond BLOCK\_MR boundaries rather than BLOCK\_MC.
 
 2. PERFORMANCE ANALYSIS
 --------------------------------------------------------------------------------
@@ -23,12 +51,20 @@ Corresponding plot: results/plot\_iter\_13\_tuned\_variant09\_op\_minimize\_m\_f
 
 3. EXPLANATION AND HYPOTHESIS
 --------------------------------------------------------------------------------
-Fringe case optimization reduces overhead from handling edge cases.
-By minimizing branching and padding, the code achieves more consistent
-performance across different matrix sizes.
+**Performance Regression Observed**: CSV data shows ~2.8\% slowdown compared to iteration 12
+(e.g., 128x128x128: 20.73 \textrightarrow 20.14 GFLOPs). Despite reducing m-fringe from BLOCK\_MC
+to BLOCK\_MR resolution which should minimize edge case overhead, the regression likely
+occurs because the added "i0 < m0" conditional in A packing introduces branching overhead
+that outweighs the fringe reduction benefits.
 
-To test this hypothesis:
-- Profile cache miss rates (perf stat -e cache-misses,cache-references)
-- Analyze instruction mix and IPC (instructions per cycle)
-- Vary block sizes to find optimal values for target architecture
-- Compare performance across different matrix sizes and shapes
+Hypothesis for regression: The A\_dlt packing loop now checks both "p0 < k0 \& i0 < m0"
+instead of just "p0 < k0", adding branch complexity. Additionally, using block\_mc\_remainder
+in the kernel loop adds a runtime-variable upper bound that may prevent compiler optimizations
+like loop unrolling. The fringe minimization is conceptually beneficial but introduces
+execution overhead in the critical packing path.
+
+To debug and recover performance:
+- Profile branch misprediction rates in A packing with dual conditionals
+- Compare packing overhead with and without the i0 < m0 check
+- Consider unconditional zero-padding for both dimensions to eliminate branches
+- Measure impact of block\_mc\_remainder on kernel loop optimization opportunities

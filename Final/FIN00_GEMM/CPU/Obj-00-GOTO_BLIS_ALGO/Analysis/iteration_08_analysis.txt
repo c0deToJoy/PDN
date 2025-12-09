@@ -3,11 +3,29 @@ ITERATION 8: tuned\_variant05\_op\_block\_mr
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Adds BLOCK\\_MR (default 4) to complete the micro-kernel dimensions, creating a 4×4 register tile:
+Adds BLOCK\_MR (default 16) to complete the micro-kernel dimensions, creating a 16×6 register tile:
 
 ```c
-for( int i2 = i1; i2 < i1 + ib; i2 += BLOCK\_MR ) {
-  int ir = (i2 + BLOCK\_MR <= i1 + ib) ? BLOCK\_MR : (i1 + ib) - i2;
+for( int j0\_o = 0; j0\_o < n0\_fringe\_start; j0\_o += BLOCK\_NC )
+  {
+    for( int p0\_o = 0; p0\_o < k0\_fringe\_start; p0\_o += BLOCK\_KC )
+      {
+        for( int i0\_o = 0; i0\_o < m0\_fringe\_start; i0\_o += BLOCK\_MC )
+          for( int j0\_i = 0; j0\_i < BLOCK\_NC; j0\_i += BLOCK\_NR )
+            for( int i0\_i = 0; i0\_i < BLOCK\_MC; i0\_i += BLOCK\_MR  )
+              for( int p0\_i = 0; p0\_i < BLOCK\_KC; ++p0\_i )
+                for( int j0\_r = 0; j0\_r < BLOCK\_NR; ++j0\_r  )
+                  for( int i0\_r = 0; i0\_r < BLOCK\_MR; ++i0\_r  )
+                  {
+                    int j0 = j0\_o + j0\_i + j0\_r;
+                    int i0 = i0\_o + i0\_i + i0\_r;
+                    int p0 = p0\_o + p0\_i;
+                    float A\_ip = A\_distributed[i0 * cs\_A + p0 * rs\_A];
+                    float B\_pj = B\_distributed[p0 * cs\_B + j0 * rs\_B];
+                    C\_distributed[i0 * cs\_C + j0 * rs\_C]  += A\_ip*B\_pj;
+                  }
+      }
+  }
 ```
 
 The micro-kernel now operates on small MR×NR blocks that fit in registers, enabling better instruction-level parallelism and register reuse.
@@ -23,7 +41,7 @@ Corresponding plot: results/plot\_iter\_08\_tuned\_variant05\_op\_block\_mr.png
 
 3. EXPLANATION AND HYPOTHESIS
 --------------------------------------------------------------------------------
-BLOCK\\_MR completes the micro-kernel with m-dimension register blocking.
+BLOCK\_MR completes the micro-kernel with m-dimension register blocking.
 The MR x NR micro-kernel is now fully optimized for register tile computation.
 
 To test this hypothesis:

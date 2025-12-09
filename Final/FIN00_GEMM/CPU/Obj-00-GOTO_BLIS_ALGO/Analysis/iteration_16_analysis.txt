@@ -3,37 +3,64 @@ ITERATION 16: tuned\_variant12\_op\_kunroll\_with\_overrun\_for\_ilp
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Introduces k-dimension loop unrolling with overrun to improve instruction-level parallelism:
+Introduces k-dimension loop unrolling with pragma directive to improve instruction-level parallelism. The k-loop is unrolled by BLOCK\_KU (default 8) iterations:
 
 ```c
-for (int p = 0; p < BLOCK\_KC; p += 4) {
-  // Unrolled 4 iterations
-  c\_reg += a[p+0] * b[p+0];
-  c\_reg += a[p+1] * b[p+1];
-  c\_reg += a[p+2] * b[p+2];
-  c\_reg += a[p+3] * b[p+3];
-}
+// Micro-kernel k-loop unrolling
+for( int p0\_i = 0; p0\_i < block\_kc\_remainder; p0\_i += BLOCK\_KU )
+  \#pragma unroll BLOCK\_KU
+  for( int p0\_u = 0; p0\_u < BLOCK\_KU; ++ p0\_u )
+    for( int j0\_r = 0; j0\_r < BLOCK\_NR; ++j0\_r  )
+      for( int i0\_r = 0; i0\_r < BLOCK\_MR; ++i0\_r  )
+      {
+        int j0 = j0\_o + j0\_i + j0\_r;
+        int i0 = i0\_o + i0\_i + i0\_r;
+        int p0 = p0\_o + p0\_i + p0\_u;
+        
+        int j0\_i\_bid = j0\_i/(BLOCK\_NR);
+        int i0\_i\_bid = i0\_i/(BLOCK\_MR);
+        
+        float A\_ip = A\_dlt[i0\_i\_bid][p0\_i+p0\_u][i0\_r];
+        float B\_pj = B\_dlt[j0\_i\_bid][p0\_i+p0\_u][j0\_r];
+        
+        C\_micro[j0\_r][i0\_r] += A\_ip*B\_pj;
+      }
 ```
 
-Unrolling exposes more independent operations to the CPU's superscalar execution units.
+This exposes BLOCK\_KU independent FMA operations per outer iteration to improve CPU superscalar exploitation.
 
 2. PERFORMANCE ANALYSIS
 --------------------------------------------------------------------------------
 Performance data from CSV files:
 
-Performance data not available in CSV format
+Variant 11 (iteration 15): 128x128x128 = 7.74 GFLOPs
+Variant 12 (iteration 16): 128x128x128 = 5.99 GFLOPs
 
 Corresponding plot: results/plot\_iter\_16\_tuned\_variant12\_op\_kunroll\_with\_overrun\_for\_ilp.png
 
 
 3. EXPLANATION AND HYPOTHESIS
 --------------------------------------------------------------------------------
-Instruction-level parallelism (ILP) optimization through loop unrolling
-allows multiple independent operations to execute simultaneously on modern
-superscalar processors, improving throughput.
+**Performance Regression**: CSV data shows ~22.6\% slowdown (e.g., 128x128x128: 7.74 \textrightarrow 5.99 
+GFLOPs). Despite the theoretical benefit of exposing more instruction-level parallelism through 
+k-dimension unrolling with BLOCK\_KU=8, the regression indicates the unrolling is counterproductive 
+at the current baseline performance state.
 
-To test this hypothesis:
-- Profile cache miss rates (perf stat -e cache-misses,cache-references)
-- Analyze instruction mix and IPC (instructions per cycle)
-- Vary block sizes to find optimal values for target architecture
-- Compare performance across different matrix sizes and shapes
+Hypothesis for regression: The unrolling introduces several negative effects:
+1. The pragma unroll directive creates BLOCK\_KU copies of the inner p0\_u loop body, increasing 
+   code size and instruction cache pressure
+2. Index calculations (p0 = p0\_o + p0\_i + p0\_u, A\_dlt access with p0\_i+p0\_u) add register 
+   pressure without significant computational benefit
+3. The underlying performance baseline (7.74 GFLOPs from iteration 15) is already CPU-limited by 
+   the broken fringe handling from iteration 14, not instruction latency
+4. Unrolling overhead on this broken baseline actively degrades performance
+
+Critical observation: Unrolling micro-kernel loops is only beneficial when the micro-kernel 
+is the actual performance bottleneck. With n-fringe minimization still broken (see iteration 14), 
+cache efficiency is the limiting factor, not instruction-level parallelism.
+
+To recover performance:
+- Revert k-loop unrolling immediately (iteration 14's n-fringe revert is prerequisite)
+- Restore n0\_fringe\_start to n0 - (n0\%(BLOCK\_NC)) to fix cache blocking
+- Only revisit k-unrolling after cache blocking is fixed and baseline performance recovered to ~20+ GFLOPs
+- Test unroll factors (2, 4, 8) on the corrected baseline to find optimal match

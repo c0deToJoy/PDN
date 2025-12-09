@@ -3,11 +3,28 @@ ITERATION 7: tuned\_variant04\_op\_block\_nr
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Introduces micro-kernel blocking with BLOCK\\_NR (default 4) for register-level optimization. The innermost j-loop is now blocked by BLOCK\\_NR:
+Introduces micro-kernel blocking with BLOCK\_NR (default 6) for register-level optimization. The n-dimension loop is now blocked by BLOCK\_NR:
 
 ```c
-for( int j2 = j1; j2 < j1 + jb; j2 += BLOCK\_NR ) {
-  int jr = (j2 + BLOCK\_NR <= j1 + jb) ? BLOCK\_NR : (j1 + jb) - j2;
+for( int j0\_o = 0; j0\_o < n0\_fringe\_start; j0\_o += BLOCK\_NC )
+  {
+    for( int p0\_o = 0; p0\_o < k0\_fringe\_start; p0\_o += BLOCK\_KC )
+      {
+        for( int i0\_o = 0; i0\_o < m0\_fringe\_start; i0\_o += BLOCK\_MC )
+          for( int j0\_i = 0; j0\_i < BLOCK\_NC; j0\_i += BLOCK\_NR )
+            for( int i0\_i = 0; i0\_i < BLOCK\_MC; ++i0\_i  )
+              for( int p0\_i = 0; p0\_i < BLOCK\_KC; ++p0\_i )
+                for( int j0\_r = 0; j0\_r < BLOCK\_NR; ++j0\_r  )
+                  {
+                    int j0 = j0\_o + j0\_i + j0\_r;
+                    int i0 = i0\_o + i0\_i;
+                    int p0 = p0\_o + p0\_i;
+                    float A\_ip = A\_distributed[i0 * cs\_A + p0 * rs\_A];
+                    float B\_pj = B\_distributed[p0 * cs\_B + j0 * rs\_B];
+                    C\_distributed[i0 * cs\_C + j0 * rs\_C]  += A\_ip*B\_pj;
+                  }
+      }
+  }
 ```
 
 This creates small register tiles (MR × NR) that can be kept entirely in CPU registers during the micro-kernel computation.
@@ -23,7 +40,7 @@ Corresponding plot: results/plot\_iter\_07\_tuned\_variant04\_op\_block\_nr.png
 
 3. EXPLANATION AND HYPOTHESIS
 --------------------------------------------------------------------------------
-BLOCK\\_NR introduces micro-kernel blocking for register-level optimization.
+BLOCK\_NR introduces micro-kernel blocking for register-level optimization.
 Small blocks are kept in registers for the innermost computation, enabling
 better instruction-level parallelism and register reuse.
 

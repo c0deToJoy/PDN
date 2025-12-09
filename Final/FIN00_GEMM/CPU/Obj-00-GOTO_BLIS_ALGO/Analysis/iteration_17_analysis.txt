@@ -3,35 +3,84 @@ ITERATION 17: tuned\_variant13\_op\_mr\_ilp
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Unrolls the m-dimension (MR) loop in the micro-kernel to improve instruction-level parallelism:
+Unrolls the m-dimension (MR) loop in the micro-kernel by adding `\#pragma unroll BLOCK\_MR` directive. This exposes all BLOCK\_MR×BLOCK\_NR operations in the innermost loop for compiler optimization:
 
 ```c
-// Explicitly unroll all MR rows
-c00 += a0 * b0; c01 += a0 * b1; c02 += a0 * b2; c03 += a0 * b3;
-c10 += a1 * b0; c11 += a1 * b1; c12 += a1 * b2; c13 += a1 * b3;
-c20 += a2 * b0; c21 += a2 * b1; c22 += a2 * b2; c23 += a2 * b3;
-c30 += a3 * b0; c31 += a3 * b1; c32 += a3 * b2; c33 += a3 * b3;
+// Initialize C\_micro with MR-unrolled loop
+for( int j0\_r = 0; j0\_r < BLOCK\_NR; ++j0\_r  )
+  \#pragma unroll BLOCK\_MR
+  for( int i0\_r = 0; i0\_r < BLOCK\_MR; ++i0\_r  )
+    {
+      C\_micro[j0\_r][i0\_r] = 0.0f;
+    }
+
+// Main computation with k and MR unrolling
+for( int p0\_i = 0; p0\_i < block\_kc\_remainder; p0\_i += BLOCK\_KU )
+  \#pragma unroll BLOCK\_KU
+  for( int p0\_u = 0; p0\_u < BLOCK\_KU; ++ p0\_u )
+    for( int j0\_r = 0; j0\_r < BLOCK\_NR; ++j0\_r  )
+      \#pragma unroll BLOCK\_MR
+      for( int i0\_r = 0; i0\_r < BLOCK\_MR; ++i0\_r  )
+      {
+        int j0 = j0\_o + j0\_i + j0\_r;
+        int i0 = i0\_o + i0\_i + i0\_r;
+        int p0 = p0\_o + p0\_i + p0\_u;
+        
+        int j0\_i\_bid = j0\_i/(BLOCK\_NR);
+        int i0\_i\_bid = i0\_i/(BLOCK\_MR);
+        
+        float A\_ip = A\_dlt[i0\_i\_bid][p0\_i+p0\_u][i0\_r];
+        float B\_pj = B\_dlt[j0\_i\_bid][p0\_i+p0\_u][j0\_r];
+        
+        C\_micro[j0\_r][i0\_r] += A\_ip*B\_pj;
+      }
+
+// Write-back with MR unrolling
+for( int j0\_r = 0; j0\_r < BLOCK\_NR; ++j0\_r  )
+  \#pragma unroll BLOCK\_MR
+  for( int i0\_r = 0; i0\_r < BLOCK\_MR; ++i0\_r  )
+    {
+      int j0 = j0\_o + j0\_i + j0\_r;
+      int i0 = i0\_o + i0\_i + i0\_r;
+      C\_distributed[i0 * cs\_C + j0 * rs\_C] += C\_micro[j0\_r][i0\_r];
+    }
 ```
 
-This exposes all MR×NR operations to the compiler for better scheduling.
+This unrolls all BLOCK\_MR iterations in the i0\_r loop, exposing independent FMA operations.
 
 2. PERFORMANCE ANALYSIS
 --------------------------------------------------------------------------------
 Performance data from CSV files:
 
-Performance data not available in CSV format
+Variant 12 (iteration 16): 128x128x128 = 5.99 GFLOPs
+Variant 13 (iteration 17): 128x128x128 = 7.08 GFLOPs (+18.2\% improvement)
 
 Corresponding plot: results/plot\_iter\_17\_tuned\_variant13\_op\_mr\_ilp.png
 
 
 3. EXPLANATION AND HYPOTHESIS
 --------------------------------------------------------------------------------
-Instruction-level parallelism (ILP) optimization through loop unrolling
-allows multiple independent operations to execute simultaneously on modern
-superscalar processors, improving throughput.
+**Modest Performance Improvement**: CSV data shows ~18.2\% gain (e.g., 128x128x128: 5.99 \textrightarrow 
+7.08 GFLOPs). The MR-dimension loop unrolling with `\#pragma unroll BLOCK\_MR` successfully exposes 
+BLOCK\_MR independent FMA operations per j0\_r iteration, allowing the compiler to better schedule 
+instructions and increase instruction-level parallelism.
 
-To test this hypothesis:
-- Profile cache miss rates (perf stat -e cache-misses,cache-references)
-- Analyze instruction mix and IPC (instructions per cycle)
-- Vary block sizes to find optimal values for target architecture
-- Compare performance across different matrix sizes and shapes
+Hypothesis for improvement: Unrolling the i0\_r loop creates BLOCK\_MR (16) separate accumulator 
+accesses to C\_micro[j0\_r][i0\_r], each with independent data dependencies. This enables the CPU's 
+superscalar execution to issue multiple FMA instructions in parallel rather than waiting for one 
+accumulator to complete before starting the next. Combined with the k-dimension unrolling from 
+iteration 16 (BLOCK\_KU=8), the micro-kernel now exposes enough ILP to partially hide the 
+memory latency and improve utilization of execution ports.
+
+However, improvement remains modest because:
+1. Underlying performance baseline is still 61.8\% below iteration 13 (20.14 GFLOPs) due to broken 
+   n-fringe minimization from iteration 14
+2. Register pressure may be starting to increase with both k and MR unrolling active
+3. Without SIMD vectorization, scalar FMA latency (4-5 cycles on modern CPUs) limits how much 
+   ILP can help
+
+To sustain and improve further:
+- Keep MR unrolling; modest gains confirm ILP extraction benefits
+- Avoid further unrolling (NR) until cache blocking is restored
+- Prepare for SIMD vectorization which will dramatically improve baseline performance
+- Monitor register usage (objdump or perf) to ensure no spilling

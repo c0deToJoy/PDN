@@ -3,14 +3,47 @@ ITERATION 6: tuned\_variant03\_op\_block\_mc
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Adds BLOCK\\_MC (m-dimension blocking, default 128) to complete the 3-level cache hierarchy:
+Adds BLOCK\_MC (m-dimension blocking, default 128) to complete the 3-level cache hierarchy:
 
 ```c
-for( int i1 = 0; i1 < m0; i1 += BLOCK\_MC ) {
-  int ib = (i1 + BLOCK\_MC <= m0) ? BLOCK\_MC : m0 - i1;
+int n0\_fringe\_start = n0 - (n0\%(BLOCK\_NC));
+int k0\_fringe\_start = k0 - (k0\%(BLOCK\_KC));
+int m0\_fringe\_start = m0 - (m0\%(BLOCK\_MC));
+
+// Steady State
+for( int j0\_o = 0; j0\_o < n0\_fringe\_start; j0\_o += BLOCK\_NC )
+  {
+    for( int p0\_o = 0; p0\_o < k0\_fringe\_start; p0\_o += BLOCK\_KC )
+      {
+        for( int i0\_o = 0; i0\_o < m0\_fringe\_start; i0\_o += BLOCK\_MC )
+          for( int j0\_i = 0; j0\_i < BLOCK\_NC; ++j0\_i )
+            for( int i0\_i = 0; i0\_i < BLOCK\_MC; ++i0\_i  )
+              for( int p0\_i = 0; p0\_i < BLOCK\_KC; ++p0\_i )
+                {
+                  int j0 = j0\_o + j0\_i;
+                  int i0 = i0\_o + i0\_i;
+                  int p0 = p0\_o + p0\_i;
+                  float A\_ip = A\_distributed[i0 * cs\_A + p0 * rs\_A];
+                  float B\_pj = B\_distributed[p0 * cs\_B + j0 * rs\_B];
+                  C\_distributed[i0 * cs\_C + j0 * rs\_C]  += A\_ip*B\_pj;
+                }
+
+        // Fringe for m0
+        for( int i0 = m0\_fringe\_start; i0 < m0; ++i0 )
+          for( int j0\_i = 0; j0\_i < BLOCK\_NC; ++j0\_i )
+            for( int p0\_i = 0; p0\_i < BLOCK\_KC; ++p0\_i )
+              {
+                int j0 = j0\_o + j0\_i;
+                int p0 = p0\_o + p0\_i;
+                float A\_ip = A\_distributed[i0 * cs\_A + p0 * rs\_A];
+                float B\_pj = B\_distributed[p0 * cs\_B + j0 * rs\_B];
+                C\_distributed[i0 * cs\_C + j0 * rs\_C]  += A\_ip*B\_pj;
+              }
+      }
+  }
 ```
 
-Now all three dimensions are blocked: NC for L3, KC for L2, and MC for L1, creating a nested structure where small tiles of C (BLOCK\\_MC × BLOCK\\_NC) fit in L1 cache.
+Now all three dimensions are blocked: NC for L3, KC for L2, and MC for L1, creating a nested structure where small tiles of C (BLOCK\_MC × BLOCK\_NC) fit in L1 cache.
 
 2. PERFORMANCE ANALYSIS
 --------------------------------------------------------------------------------
@@ -23,9 +56,9 @@ Corresponding plot: results/plot\_iter\_06\_tuned\_variant03\_op\_block\_mc.png
 
 3. EXPLANATION AND HYPOTHESIS
 --------------------------------------------------------------------------------
-BLOCK\\_MC adds blocking in the m-dimension (rows of C), creating the full
+BLOCK\_MC adds blocking in the m-dimension (rows of C), creating the full
 3-level cache hierarchy blocking structure. This ensures the micro-panel
-of C fits in L1 cache while blocks of A and B fit in L2/L3.
+of C fits in L1 cache while blocks of A and B fit in L2/L3, again, improving cache locality.
 
 To test this hypothesis:
 - Profile cache miss rates (perf stat -e cache-misses,cache-references)

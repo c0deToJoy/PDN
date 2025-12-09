@@ -3,16 +3,45 @@ ITERATION 9: tuned\_variant05\_op\_block\_micro\_kernel
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Refactors the innermost computation into a dedicated micro-kernel function. Instead of inline loops, the code now calls:
+Introduces a micro-kernel register tile (C\_micro) to accumulate results in registers before writing back to memory. This improves data locality and register reuse:
 
 ```c
-AddDot\_MRxNR\_stride\_dlt(ir, jr, pb, 
-                        &A\_distributed[i2*cs\_A + p1*rs\_A], rs\_A, cs\_A,
-                        &B\_distributed[p1*cs\_B + j2*rs\_B], rs\_B, cs\_B,
-                        &C\_distributed[i2*cs\_C + j2*rs\_C], rs\_C, cs\_C);
+for( int j0\_i = 0; j0\_i < BLOCK\_NC; j0\_i += BLOCK\_NR )
+  for( int i0\_i = 0; i0\_i < BLOCK\_MC; i0\_i += BLOCK\_MR  )
+  {
+    // Small register tile for accumulation
+    float C\_micro[BLOCK\_NR][BLOCK\_MR];
+    
+    // Zero out C\_micro
+    for( int j0\_r = 0; j0\_r < BLOCK\_NR; ++j0\_r  )
+      for( int i0\_r = 0; i0\_r < BLOCK\_MR; ++i0\_r  )
+        C\_micro[j0\_r][i0\_r] = 0.0f;
+
+    // Rank-K update in register tile
+    for( int p0\_i = 0; p0\_i < BLOCK\_KC; ++p0\_i )
+      for( int j0\_r = 0; j0\_r < BLOCK\_NR; ++j0\_r  )
+        for( int i0\_r = 0; i0\_r < BLOCK\_MR; ++i0\_r  )
+        {
+          int j0 = j0\_o + j0\_i + j0\_r;
+          int i0 = i0\_o + i0\_i + i0\_r;
+          int p0 = p0\_o + p0\_i;
+          float A\_ip = A\_distributed[i0 * cs\_A + p0 * rs\_A];
+          float B\_pj = B\_distributed[p0 * cs\_B + j0 * rs\_B];
+          C\_micro[j0\_r][i0\_r] += A\_ip*B\_pj;
+        }
+    
+    // Write back accumulated results to C
+    for( int j0\_r = 0; j0\_r < BLOCK\_NR; ++j0\_r  )
+      for( int i0\_r = 0; i0\_r < BLOCK\_MR; ++i0\_r  )
+      {
+        int j0 = j0\_o + j0\_i + j0\_r;
+        int i0 = i0\_o + i0\_i + i0\_r;
+        C\_distributed[i0 * cs\_C + j0 * rs\_C] += C\_micro[j0\_r][i0\_r];
+      }
+  }
 ```
 
-This encapsulates the register-tiled computation, making it easier to optimize and potentially inline by the compiler.
+This register tile encapsulation reduces memory pressure and improves instruction-level parallelism.
 
 2. PERFORMANCE ANALYSIS
 --------------------------------------------------------------------------------
@@ -25,12 +54,14 @@ Corresponding plot: results/plot\_iter\_09\_tuned\_variant05\_op\_block\_micro\_
 
 3. EXPLANATION AND HYPOTHESIS
 --------------------------------------------------------------------------------
-SIMD vectorization using AVX2 intrinsics enables processing multiple data
-elements in parallel (4-8 doubles per instruction). This dramatically
-increases computational throughput for floating-point operations.
+The register tile accumulation reduces memory write traffic significantly. Instead
+of writing C\_distributed for every k iteration (BLOCK\_KC writes per element),
+results accumulate in the small C\_micro tile in registers, then write back once
+after all k-iterations complete. This reduces memory bandwidth pressure and 
+improves register reuse across the rank-K update loop.
 
 To test this hypothesis:
-- Profile cache miss rates (perf stat -e cache-misses,cache-references)
-- Analyze instruction mix and IPC (instructions per cycle)
-- Vary block sizes to find optimal values for target architecture
-- Compare performance across different matrix sizes and shapes
+- Profile L1/L2 cache write misses and memory bandwidth utilization
+- Measure store operations vs. loads (should see reduced stores)
+- Analyze memory stall cycles and data cache efficiency
+- Compare register allocation pressure with and without tile accumulation

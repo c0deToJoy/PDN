@@ -3,12 +3,32 @@ ITERATION 4: tuned\_variant01\_op
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Introduces the first level of cache blocking by adding BLOCK\\_NC (n-dimension blocking, default 192). The outer j-loop now iterates in blocks of BLOCK\\_NC:
+Introduces the first level of cache blocking by adding BLOCK\_NC (n-dimension blocking, default 192). The outer j-loop now iterates in blocks of BLOCK\_NC:
 
 ```c
-for( int j1 = 0; j1 < n0; j1 += BLOCK\_NC ) {
-  int jb = (j1 + BLOCK\_NC <= n0) ? BLOCK\_NC : n0 - j1;
-  for( int j0 = j1; j0 < j1 + jb; ++j0 ) {
+int n0\_fringe\_start = n0 - (n0\%(BLOCK\_NC));
+
+// Steady State
+for( int j0\_o = 0; j0\_o < n0\_fringe\_start; j0\_o += BLOCK\_NC )
+  for( int p0 = 0; p0 < k0; ++p0 )
+    for( int i0 = 0; i0 < m0; ++i0 )
+      for( int j0\_i = 0; j0\_i < BLOCK\_NC; ++j0\_i )
+        {
+          int j0 = j0\_o + j0\_i;
+          float A\_ip = A\_distributed[i0 * cs\_A + p0 * rs\_A];
+          float B\_pj = B\_distributed[p0 * cs\_B + j0 * rs\_B];
+          C\_distributed[i0 * cs\_C + j0 * rs\_C]  += A\_ip*B\_pj;
+        }
+
+// Fringe for n0
+for( int j0 = n0\_fringe\_start; j0 < n0; ++j0 )
+  for( int p0 = 0; p0 < k0; ++p0 )
+    for( int i0 = 0; i0 < m0; ++i0 )
+      {
+        float A\_ip = A\_distributed[i0 * cs\_A + p0 * rs\_A];
+        float B\_pj = B\_distributed[p0 * cs\_B + j0 * rs\_B];
+        C\_distributed[i0 * cs\_C + j0 * rs\_C]  += A\_ip*B\_pj;
+      }
 ```
 
 This partitions the n-dimension (columns of C) into vertical panels that fit better in L3 cache, reducing cache misses when accessing C repeatedly.
@@ -24,7 +44,7 @@ Corresponding plot: results/plot\_iter\_04\_tuned\_variant01\_op.png
 
 3. EXPLANATION AND HYPOTHESIS
 --------------------------------------------------------------------------------
-Introduction of BLOCK\\_NC enables blocking in the n-dimension (columns of C).
+Introduction of BLOCK\_NC enables blocking in the n-dimension (columns of C).
 This improves cache locality by working on vertical panels of C that fit
 in L3 cache. Performance improvement comes from reduced cache misses.
 

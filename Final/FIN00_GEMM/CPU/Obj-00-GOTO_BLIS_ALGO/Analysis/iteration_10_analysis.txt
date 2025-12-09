@@ -3,15 +3,34 @@ ITERATION 10: tuned\_variant06\_op\_pack\_dlt\_B
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Introduces data packing for matrix B. Before the inner loops, B is reorganized into a contiguous buffer:
+Introduces data packing for matrix B into a cache-friendly layout. Before the kernel loops, a BLOCK\_KC x BLOCK\_NC block of B is reorganized to match micro-kernel access order:
 
 ```c
-float *B\_packed = (float*)malloc(pb * jb * sizeof(float));
-pack\_matrix\_B(pb, jb, &B\_distributed[p1*cs\_B + j1*rs\_B], 
-              rs\_B, cs\_B, B\_packed);
+for( int j0\_o = 0; j0\_o < n0\_fringe\_start; j0\_o += BLOCK\_NC )
+  {
+    for( int p0\_o = 0; p0\_o < k0\_fringe\_start; p0\_o += BLOCK\_KC )
+    {
+      // Pack B block into contiguous cache-friendly layout
+      // Reorder: B[p0][j0] --> B\_dlt[j0\_i\_block][p0\_i][j0\_r]
+      float B\_dlt[num\_j0\_i\_blocks][BLOCK\_KC][BLOCK\_NR];
+      for( int j0\_i = 0; j0\_i < BLOCK\_NC; j0\_i += BLOCK\_NR )
+        for( int p0\_i = 0; p0\_i < BLOCK\_KC; ++p0\_i )
+          for( int j0\_r = 0; j0\_r < BLOCK\_NR; ++j0\_r  )
+          {
+            int j0 = j0\_o + j0\_i + j0\_r;
+            int p0 = p0\_o + p0\_i;
+            int j0\_i\_bid = j0\_i/(BLOCK\_NR);
+            B\_dlt[j0\_i\_bid][p0\_i][j0\_r] =
+              B\_distributed[p0 * cs\_B + j0 * rs\_B];
+          }
+      
+      // Continues using B\_dlt in kernel loops
+      // ... kernel computation using B\_dlt ...
+    }
+  }
 ```
 
-Packing eliminates strided accesses to B, improving memory bandwidth and cache line utilization.
+This packing transforms B from row-major to a format matching micro-kernel access patterns.
 
 2. PERFORMANCE ANALYSIS
 --------------------------------------------------------------------------------
@@ -24,12 +43,19 @@ Corresponding plot: results/plot\_iter\_10\_tuned\_variant06\_op\_pack\_dlt\_B.p
 
 3. EXPLANATION AND HYPOTHESIS
 --------------------------------------------------------------------------------
-Data packing for matrix B reorganizes data into a contiguous, cache-friendly
-layout. This eliminates strided accesses and improves memory bandwidth
-utilization, leading to significant performance gains.
+**Performance Regression Observed**: CSV data shows ~4-8\% slowdown across most matrix
+sizes (e.g., 128x128x128: 19.23 \textrightarrow 20.85 GFLOPs). Despite reorganizing B
+into a cache-friendly layout that should improve spatial locality and eliminate strided
+accesses, the regression likely occurs because the packing overhead is not being offset
+effectively at these block sizes.
 
-To test this hypothesis:
-- Profile cache miss rates (perf stat -e cache-misses,cache-references)
-- Analyze instruction mix and IPC (instructions per cycle)
-- Vary block sizes to find optimal values for target architecture
-- Compare performance across different matrix sizes and shapes
+Hypothesis for regression: The multi-dimensional array B\_dlt[num\_j0\_i\_blocks][BLOCK\_KC][BLOCK\_NR]
+is stack-allocated inside the p0\_o loop, causing the packing transformation to execute
+repeatedly. The packing copy loop itself (3 nested iterations) adds O(BLOCK\_KC x BLOCK\_NC)
+work per outer loop iteration without sufficient computational overlap to offset the cost.
+
+To debug and recover performance:
+- Move B\_dlt allocation outside the i0\_o loop (allocate once per j0\_o/p0\_o iteration)
+- Profile cache miss rates to verify packing benefits: perf stat -e LLC-loads,LLC-stores,LLC-misses
+- Measure packing loop time vs. total computation time to assess overhead trade-off
+- Consider lazy packing: pack only when needed or use in-place transformation

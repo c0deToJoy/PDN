@@ -3,34 +3,77 @@ ITERATION 19: tuned\_variant15\_op\_presimd\_data\_dist\_elem
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Prepares data layout for SIMD by organizing elements in a SIMD-friendly pattern:
+Reorganizes data to prepare for SIMD vectorization. Instead of a flat 2D array `C\_micro[BLOCK\_NR][BLOCK\_MR]`, introduces a 3D structure `C\_micro[BLOCK\_NR][BLOCK\_MR/PAR\_VECT\_LEN][PAR\_VECT\_LEN]` that groups BLOCK\_MR elements into vector-sized chunks (PAR\_VECT\_LEN typically 4 for AVX2 floats). This aligns data for efficient SIMD operations.
 
 ```c
-// Pack data in vectors of 4 elements (for future SIMD)
-for (int i = 0; i < MR; i += SIMD\_WIDTH) {
-  // Group consecutive elements
-}
-```
+// C_micro with vectorized grouping (3D layout for SIMD)
+float C\_micro[BLOCK\_NR][BLOCK\_MR/PAR\_VECT\_LEN][PAR\_VECT\_LEN];
 
-This reorganization sets up the data so SIMD instructions can load/operate on multiple elements simultaneously.
+// Initialize with vector-aware indexing
+\#pragma unroll BLOCK\_NR
+for( int j0\_r = 0; j0\_r < BLOCK\_NR; ++j0\_r  )
+  \#pragma unroll BLOCK\_MR
+  for( int i0\_r = 0; i0\_r < BLOCK\_MR; ++i0\_r  )
+    {
+      C\_micro[j0\_r][i0\_r/PAR\_VECT\_LEN][i0\_r\%PAR\_VECT\_LEN] = 0.0f;
+    }
+
+// Rank-K update with vector-indexed accumulation
+for( int p0\_i = 0; p0\_i < block\_kc\_remainder; p0\_i += BLOCK\_KU )
+  \#pragma unroll BLOCK\_KU
+  for( int p0\_u = 0; p0\_u < BLOCK\_KU; ++ p0\_u )
+    \#pragma unroll BLOCK\_NR
+    for( int j0\_r = 0; j0\_r < BLOCK\_NR; ++j0\_r  )
+      \#pragma unroll BLOCK\_MR
+      for( int i0\_r = 0; i0\_r < BLOCK\_MR; ++i0\_r  )
+        {
+          int j0\_i\_bid = j0\_i/(BLOCK\_NR);
+          int i0\_i\_bid = i0\_i/(BLOCK\_MR);
+
+          // A now vectorized along i0_r dimension
+          float A\_ip = A\_dlt[i0\_i\_bid][p0\_i+p0\_u][i0\_r/PAR\_VECT\_LEN][i0\_r\%PAR\_VECT\_LEN];
+          float B\_pj = B\_dlt[j0\_i\_bid][p0\_i+p0\_u][j0\_r];
+
+          C\_micro[j0\_r][i0\_r/PAR\_VECT\_LEN][i0\_r\%PAR\_VECT\_LEN] += A\_ip*B\_pj;
+        }
+
+// Write-back with vector-aware indexing
+\#pragma unroll BLOCK\_NR
+for( int j0\_r = 0; j0\_r < BLOCK\_NR; ++j0\_r  )
+  \#pragma unroll BLOCK\_MR
+  for( int i0\_r = 0; i0\_r < BLOCK\_MR; ++i0\_r  )
+    {
+      int j0 = j0\_o + j0\_i + j0\_r;
+      int i0 = i0\_o + i0\_i + i0\_r;
+
+      C\_distributed[i0 * cs\_C + j0 * rs\_C] += C\_micro[j0\_r][i0\_r/PAR\_VECT\_LEN][i0\_r\%PAR\_VECT\_LEN];
+    }
+```
 
 2. PERFORMANCE ANALYSIS
 --------------------------------------------------------------------------------
-Performance data from CSV files:
-
-Performance data not available in CSV format
+Variant 14 (iteration 18): 128x128x128 = 7.15 GFLOPs
+Variant 15 (iteration 19): 128x128x128 = 7.16 GFLOPs (+0.1% improvement, marginal)
 
 Corresponding plot: results/plot\_iter\_19\_tuned\_variant15\_op\_presimd\_data\_dist\_elem.png
 
 
 3. EXPLANATION AND HYPOTHESIS
 --------------------------------------------------------------------------------
-SIMD vectorization using AVX2 intrinsics enables processing multiple data
-elements in parallel (4-8 doubles per instruction). This dramatically
-increases computational throughput for floating-point operations.
+**Negligible Improvement**: CSV data shows only +0.1\% gain (7.15 \textrightarrow 7.16 GFLOPs), essentially no change. The reorganization of C\_micro from flat 2D `[BLOCK\_NR][BLOCK\_MR]` to 3D `[BLOCK\_NR][BLOCK\_MR/PAR\_VECT\_LEN][PAR\_VECT\_LEN]` is a pure data layout restructuring with no new computation changes.
 
-To test this hypothesis:
-- Profile cache miss rates (perf stat -e cache-misses,cache-references)
-- Analyze instruction mix and IPC (instructions per cycle)
-- Vary block sizes to find optimal values for target architecture
-- Compare performance across different matrix sizes and shapes
+Hypothesis for negligible improvement:
+1. Index calculations `[i0\_r/PAR\_VECT\_LEN][i0\_r\%PAR\_VECT\_LEN]` introduce division and modulo operations in the hot inner loop
+2. The scalar FMA pipeline remains unchanged; no actual vector instructions are used yet
+3. Compiler may optimize away the 3D indexing back to 1D memory access patterns, negating the restructuring overhead
+4. Register allocation may be slightly affected by changed access patterns, but overall memory bandwidth is not improved without SIMD
+
+Despite minimal performance impact:
+- Data structure change is architecturally correct for future SIMD implementation
+- A\_dlt is now also vectorized along the MR dimension (split into PAR\_VECT\_LEN-sized chunks)
+- This setup enables AVX2 or other SIMD backends to load aligned vector elements efficiently
+- Overhead cost is minimal because the restructuring occurs at memory access time, not in computation
+
+To realize benefits from this layout:
+- Next iteration (20) should apply actual vector instructions (SIMD) to exploit the aligned data
+- Without SIMD, the 3D indexing overhead (division/modulo) slightly offsets any cache benefits

@@ -3,16 +3,37 @@ ITERATION 12: tuned\_variant08\_op\_zero\_pack\_remove\_k\_fringe
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Removes the k-dimension fringe handling by adjusting BLOCK\\_KC to ensure it always divides evenly. The packing routines now assume no k-fringe:
+Eliminates k-dimension fringe handling by zero-padding packed buffers. The p0\_o loop now iterates over full k0 dimension, and packing conditionally adds zeros for out-of-bounds elements:
 
 ```c
-// Zero-pad during packing if necessary
-for (int p = 0; p < BLOCK\_KC; ++p) {
-  // Actual data or zero padding
-}
+for( int p0\_o = 0; p0\_o < k0; p0\_o += BLOCK\_KC )
+  {
+    int block\_kc\_remainder = min(BLOCK\_KC, k0-p0\_o);
+    
+    // Pack B with zero-padding for k-fringe
+    float B\_dlt[num\_j0\_i\_blocks][BLOCK\_KC][BLOCK\_NR];
+    for( int j0\_i = 0; j0\_i < BLOCK\_NC; j0\_i += BLOCK\_NR )
+      for( int p0\_i = 0; p0\_i < BLOCK\_KC; ++p0\_i )
+        for( int j0\_r = 0; j0\_r < BLOCK\_NR; ++j0\_r  )
+        {
+          int j0 = j0\_o + j0\_i + j0\_r;
+          int p0 = p0\_o + p0\_i;
+          int j0\_i\_bid = j0\_i/(BLOCK\_NR);
+          
+          // Zero-pad if beyond k dimension
+          if (p0 < k0 )
+            B\_dlt[j0\_i\_bid][p0\_i][j0\_r] =
+              B\_distributed[p0 * cs\_B + j0 * rs\_B];
+          else
+            B\_dlt[j0\_i\_bid][p0\_i][j0\_r] = 0.0f;
+        }
+    
+    // Similar zero-padding for A\_dlt (not shown)
+    // ... micro-kernel uses full BLOCK\_KC without fringe checks
+  }
 ```
 
-This simplification eliminates conditional branches in the micro-kernel's k-loop, improving performance.
+This removes separate k-fringe handling loops, replacing them with zero-padding during packing.
 
 2. PERFORMANCE ANALYSIS
 --------------------------------------------------------------------------------
@@ -25,12 +46,21 @@ Corresponding plot: results/plot\_iter\_12\_tuned\_variant08\_op\_zero\_pack\_re
 
 3. EXPLANATION AND HYPOTHESIS
 --------------------------------------------------------------------------------
-Fringe case optimization reduces overhead from handling edge cases.
-By minimizing branching and padding, the code achieves more consistent
-performance across different matrix sizes.
+**Slight Performance Improvement**: CSV data shows modest gains compared to iteration 11
+(e.g., 128x128x128: 20.26 \textrightarrow 20.73 GFLOPs, ~2.3\% improvement). Eliminating
+k-dimension fringe loops reduces branching overhead in the micro-kernel, though the
+improvement is small because the zero-padding during packing adds conditional checks
+that move some overhead from the micro-kernel to the packing phase.
 
-To test this hypothesis:
-- Profile cache miss rates (perf stat -e cache-misses,cache-references)
-- Analyze instruction mix and IPC (instructions per cycle)
-- Vary block sizes to find optimal values for target architecture
-- Compare performance across different matrix sizes and shapes
+Hypothesis for modest improvement: The micro-kernel now processes full BLOCK\_KC blocks
+without k-fringe conditionals, improving instruction pipeline efficiency. However, the
+packing loops still contain "if (p0 < k0)" conditionals to determine when to zero-pad,
+moving the branching overhead from the micro-kernel to the packing phase. The net benefit
+is reduced code complexity and slightly better performance, but not a major breakthrough
+until SIMD/unrolling optimizations leverage the simpler micro-kernel structure.
+
+To verify and improve further:
+- Profile branch misprediction rates in packing vs. micro-kernel execution
+- Measure micro-kernel execution time separately from packing overhead
+- Consider unconditional zero-padding (always pad full BLOCK\_KC) to eliminate conditionals
+- Prepare for loop unrolling that will benefit from predictable iteration counts

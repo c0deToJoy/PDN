@@ -3,25 +3,86 @@ ITERATION 20: tuned\_variant16\_op\_presimd\_data\_dist\_elem\_cleaner
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Cleans up the pre-SIMD data distribution from iteration 19, making the element layout more regular and removing unnecessary complexity. The packing routines are streamlined to produce cleaner memory access patterns for the upcoming SIMD implementation.
+Cleans up the pre-SIMD data distribution by replacing implicit modulo/division indexing (`i0\_r/PAR\_VECT\_LEN`, `i0\_r\%PAR\_VECT\_LEN`) with explicit vector block index (i0\_r\_bid) and vector element index (i0\_r\_vid). This removes costly integer operations from the hot loop and adds explicit pragma unroll on the vector block dimension, enabling better compiler optimization.
+
+```c
+// Explicit vectorized indexing (cleaner version)
+float C\_micro[BLOCK\_NR][BLOCK\_MR/PAR\_VECT\_LEN][PAR\_VECT\_LEN];
+
+// Initialize with explicit bid/vid loops
+\#pragma unroll BLOCK\_NR
+for( int j0\_r = 0; j0\_r < BLOCK\_NR; ++j0\_r  )
+  \#pragma unroll ((BLOCK\_MR)/(PAR\_VECT\_LEN))
+  for( int i0\_r\_bid = 0; i0\_r\_bid < BLOCK\_MR/(PAR\_VECT\_LEN); ++i0\_r\_bid  )
+    for( int i0\_r\_vid = 0; i0\_r\_vid < PAR\_VECT\_LEN; ++i0\_r\_vid  )
+      {
+        C\_micro[j0\_r][i0\_r\_bid][i0\_r\_vid] = 0.0f;
+      }
+
+// Rank-K update with explicit vector dimension unrolling
+for( int p0\_i = 0; p0\_i < block\_kc\_remainder; p0\_i += BLOCK\_KU )
+  \#pragma unroll BLOCK\_KU
+  for( int p0\_u = 0; p0\_u < BLOCK\_KU; ++ p0\_u )
+    \#pragma unroll BLOCK\_NR
+    for( int j0\_r = 0; j0\_r < BLOCK\_NR; ++j0\_r )
+      \#pragma unroll ((BLOCK\_MR)/(PAR\_VECT\_LEN))
+      for( int i0\_r\_bid = 0; i0\_r\_bid < BLOCK\_MR/(PAR\_VECT\_LEN); ++i0\_r\_bid  )
+        for( int i0\_r\_vid = 0; i0\_r\_vid < PAR\_VECT\_LEN; ++i0\_r\_vid  )
+          {
+            int i0\_r = i0\_r\_bid*(PAR\_VECT\_LEN) + i0\_r\_vid;
+            int j0\_i\_bid = j0\_i/(BLOCK\_NR);
+            int i0\_i\_bid = i0\_i/(BLOCK\_MR);
+
+            float A\_ip = A\_dlt[i0\_i\_bid][p0\_i+p0\_u][i0\_r\_bid][i0\_r\_vid];
+            float B\_pj = B\_dlt[j0\_i\_bid][p0\_i+p0\_u][j0\_r];
+
+            C\_micro[j0\_r][i0\_r\_bid][i0\_r\_vid] += A\_ip*B\_pj;
+          }
+
+// Write-back with explicit vector dimension unrolling
+\#pragma unroll BLOCK\_NR
+for( int j0\_r = 0; j0\_r < BLOCK\_NR; ++j0\_r  )
+  \#pragma unroll ((BLOCK\_MR)/(PAR\_VECT\_LEN))
+  for( int i0\_r\_bid = 0; i0\_r\_bid < BLOCK\_MR/(PAR\_VECT\_LEN); ++i0\_r\_bid  )
+    for( int i0\_r\_vid = 0; i0\_r\_vid < PAR\_VECT\_LEN; ++i0\_r\_vid  )
+      {
+        int i0\_r = i0\_r\_bid*(PAR\_VECT\_LEN) + i0\_r\_vid;
+        int j0 = j0\_o + j0\_i + j0\_r;
+        int i0 = i0\_o + i0\_i + i0\_r;
+
+        C\_distributed[i0 * cs\_C + j0 * rs\_C] += C\_micro[j0\_r][i0\_r\_bid][i0\_r\_vid];
+      }
+```
 
 2. PERFORMANCE ANALYSIS
 --------------------------------------------------------------------------------
-Performance data from CSV files:
-
-Performance data not available in CSV format
+Variant 15 (iteration 19): 128x128x128 = 7.16 GFLOPs
+Variant 16 (iteration 20): 128x128x128 = 7.30 GFLOPs (+1.9% improvement)
 
 Corresponding plot: results/plot\_iter\_20\_tuned\_variant16\_op\_presimd\_data\_dist\_elem\_cleaner.png
 
 
 3. EXPLANATION AND HYPOTHESIS
 --------------------------------------------------------------------------------
-SIMD vectorization using AVX2 intrinsics enables processing multiple data
-elements in parallel (4-8 doubles per instruction). This dramatically
-increases computational throughput for floating-point operations.
+**Modest Performance Improvement**: CSV data shows +1.9\% gain (7.16 \textrightarrow 7.30 GFLOPs). The switch from implicit indexing (division/modulo in hot loop) to explicit `i0\_r\_bid` and `i0\_r\_vid` indices eliminates expensive integer operations and enables the compiler to unroll the bid loop explicitly with `\#pragma unroll ((BLOCK\_MR)/(PAR\_VECT\_LEN))`.
 
-To test this hypothesis:
-- Profile cache miss rates (perf stat -e cache-misses,cache-references)
-- Analyze instruction mix and IPC (instructions per cycle)
-- Vary block sizes to find optimal values for target architecture
-- Compare performance across different matrix sizes and shapes
+Hypothesis for improvement:
+1. Removing division/modulo operations from the innermost loop reduces instruction count and latency
+2. Explicit `i0\_r\_bid` dimension allows loop unrolling and reduces dependency chains
+3. With BLOCK\_MR=16 and PAR\_VECT\_LEN=4, unrolling the bid loop (4 iterations) improves scheduling
+4. Cleaner indexing may improve compiler alias analysis and memory disambiguation
+
+This modest +1.9\% gain is encouraging because:
+- It demonstrates that removing cheap algebraic operations from hot paths helps
+- The vectorized data structure is now clean and ready for actual SIMD instructions
+- Compiler can better optimize the explicit multi-dimensional structure
+
+However, performance remains 64.6\% below iteration 13 baseline (20.14 GFLOPs) because:
+- Still using scalar FMA; no vector instructions yet
+- The underlying n-fringe architectural violation from iteration 14 is not fixed
+- SIMD instructions will be essential for next major performance jump
+
+To continue:
+- Next iteration (21+) should apply AVX2 or other SIMD intrinsics to leverage the cleaned-up data layout
+- Vector load/store and vector FMA operations should provide 4-8x improvement
+- Full recovery requires fixing iteration 14's architectural violation (restore BLOCK\_NC as outermost block)

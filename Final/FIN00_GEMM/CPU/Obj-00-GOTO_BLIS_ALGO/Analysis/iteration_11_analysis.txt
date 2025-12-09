@@ -3,15 +3,31 @@ ITERATION 11: tuned\_variant07\_op\_pack\_dlt\_A
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Adds data packing for matrix A, complementing the B packing from iteration 10:
+Adds data packing for matrix A, complementing the B packing from iteration 10. A BLOCK\_MC x BLOCK\_KC block of A is reorganized inside the i0\_o loop:
 
 ```c
-float *A\_packed = (float*)malloc(pb * ib * sizeof(float));
-pack\_matrix\_A(pb, ib, &A\_distributed[i1*cs\_A + p1*rs\_A], 
-              rs\_A, cs\_A, A\_packed);
+for( int i0\_o = 0; i0\_o < m0\_fringe\_start; i0\_o += BLOCK\_MC )
+  {
+    // Pack A block into cache-friendly layout
+    // Reorder: A[i0][p0] --> A\_dlt[i0\_i\_block][p0\_i][i0\_r]
+    float A\_dlt[num\_i0\_i\_blocks][BLOCK\_KC][BLOCK\_MR];
+    for( int i0\_i = 0; i0\_i < BLOCK\_MC; i0\_i += BLOCK\_MR  )
+      for( int p0\_i = 0; p0\_i < BLOCK\_KC; ++p0\_i )
+        for( int i0\_r = 0; i0\_r < BLOCK\_MR; ++i0\_r  )
+        {
+          int i0 = i0\_o + i0\_i + i0\_r;
+          int p0 = p0\_o + p0\_i;
+          int i0\_i\_bid = i0\_i/(BLOCK\_MR);
+          A\_dlt[i0\_i\_bid][p0\_i][i0\_r] =
+            A\_distributed[i0 * cs\_A + p0 * rs\_A];
+        }
+    
+    // Use A\_dlt in kernel loops (not shown for brevity)
+    // ... kernel computation using A\_dlt and B\_dlt ...
+  }
 ```
 
-With both A and B packed into contiguous layouts, the micro-kernel achieves near-optimal memory access patterns.
+With both A and B packed, the micro-kernel accesses both matrices in contiguous, cache-friendly order.
 
 2. PERFORMANCE ANALYSIS
 --------------------------------------------------------------------------------
@@ -24,11 +40,20 @@ Corresponding plot: results/plot\_iter\_11\_tuned\_variant07\_op\_pack\_dlt\_A.p
 
 3. EXPLANATION AND HYPOTHESIS
 --------------------------------------------------------------------------------
-Data packing for matrix A complements B packing. With both matrices packed,
-the micro-kernel can achieve near-peak memory bandwidth and maximize cache reuse.
+**Continued Performance Regression**: CSV data shows additional slowdown compared to 
+iteration 10 (e.g., 128x128x128: 20.85 \textrightarrow 20.26 GFLOPs). Despite packing both
+A and B into contiguous layouts that should enable optimal sequential memory access,
+the regression persists because the combined packing overhead now affects both matrices
+without sufficient performance gains to offset the cost.
 
-To test this hypothesis:
-- Profile cache miss rates (perf stat -e cache-misses,cache-references)
-- Analyze instruction mix and IPC (instructions per cycle)
-- Vary block sizes to find optimal values for target architecture
-- Compare performance across different matrix sizes and shapes
+Hypothesis for regression: Adding A\_dlt packing inside the i0\_o loop compounds the overhead
+from B\_dlt packing. Both transformations are stack-allocated and repeatedly executed,
+adding O(BLOCK\_MC x BLOCK\_KC) + O(BLOCK\_NC x BLOCK\_KC) copy operations per iteration.
+The micro-kernel may not be exploiting the packed layout efficiently yet (e.g., lacking
+SIMD vectorization or proper unrolling to leverage contiguous access).
+
+To debug and recover performance:
+- Profile memory bandwidth utilization to verify if packing enables better sequential access
+- Measure total packing overhead vs. kernel computation time
+- Examine assembly to verify compiler is generating efficient loads from packed buffers
+- Consider deferring packing benefits until SIMD/unrolling optimizations are in place

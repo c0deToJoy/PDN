@@ -3,14 +3,42 @@ ITERATION 5: tuned\_variant02\_op
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Adds BLOCK\\_KC (k-dimension blocking, default 128) to the existing BLOCK\\_NC blocking. Now both the k-loop (reduction dimension) and n-loop are blocked:
+Adds BLOCK\_KC (k-dimension blocking, default 128) to the existing BLOCK\_NC blocking. Now both the k-loop (reduction dimension) and n-loop are blocked:
 
 ```c
-for( int p1 = 0; p1 < k0; p1 += BLOCK\_KC ) {
-  int pb = (p1 + BLOCK\_KC <= k0) ? BLOCK\_KC : k0 - p1;
+int n0\_fringe\_start = n0 - (n0\%(BLOCK\_NC));
+int k0\_fringe\_start = k0 - (k0\%(BLOCK\_KC));
+
+// Steady State
+for( int j0\_o = 0; j0\_o < n0\_fringe\_start; j0\_o += BLOCK\_NC )
+  {
+    // Steady State
+    for( int p0\_o = 0; p0\_o < k0\_fringe\_start; p0\_o += BLOCK\_KC )
+      for( int i0 = 0; i0 < m0; ++i0 )
+        for( int j0\_i = 0; j0\_i < BLOCK\_NC; ++j0\_i )
+          for( int p0\_i = 0; p0\_i < BLOCK\_KC; ++p0\_i )
+          {
+            int j0 = j0\_o + j0\_i;
+            int p0 = p0\_o + p0\_i;
+            float A\_ip = A\_distributed[i0 * cs\_A + p0 * rs\_A];
+            float B\_pj = B\_distributed[p0 * cs\_B + j0 * rs\_B];
+            C\_distributed[i0 * cs\_C + j0 * rs\_C]  += A\_ip*B\_pj;
+          }
+
+    // Fringe for k0
+    for( int p0 = k0\_fringe\_start; p0 < k0; ++p0 )
+      for( int i0 = 0; i0 < m0; ++i0 )
+        for( int j0\_i = 0; j0\_i < BLOCK\_NC; ++j0\_i )
+          {
+            int j0 = j0\_o + j0\_i;
+            float A\_ip = A\_distributed[i0 * cs\_A + p0 * rs\_A];
+            float B\_pj = B\_distributed[p0 * cs\_B + j0 * rs\_B];
+            C\_distributed[i0 * cs\_C + j0 * rs\_C]  += A\_ip*B\_pj;
+          }
+  }
 ```
 
-This ensures that panels of A (m×BLOCK\\_KC) and B (BLOCK\\_KC×n) fit in L2/L3 cache during the inner product accumulation, significantly improving data reuse.
+This ensures that panels of A (m×BLOCK\_KC) and B (BLOCK\_KC×n) fit in L2/L3 cache during the inner product accumulation, significantly improving data reuse.
 
 2. PERFORMANCE ANALYSIS
 --------------------------------------------------------------------------------
@@ -23,7 +51,7 @@ Corresponding plot: results/plot\_iter\_05\_tuned\_variant02\_op.png
 
 3. EXPLANATION AND HYPOTHESIS
 --------------------------------------------------------------------------------
-BLOCK\\_KC introduces blocking in the k-dimension (reduction dimension).
+BLOCK\_KC introduces blocking in the k-dimension (reduction dimension).
 This ensures panels of A and B fit in cache during the inner product,
 significantly improving L2/L3 cache reuse.
 

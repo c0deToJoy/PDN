@@ -3,25 +3,74 @@ ITERATION 18: tuned\_variant14\_op\_nr\_ilp
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Unrolls the n-dimension (NR) loop similar to iteration 17's MR unrolling. The micro-kernel now has fully unrolled MR×NR computation, maximizing instruction-level parallelism and register usage. Each element of the 4×4 result tile is computed explicitly without loops.
+Unrolls the NR dimension (inner loop over j0\_r) in addition to the MR unrolling from iteration 17. With both `\#pragma unroll BLOCK\_MR` and `\#pragma unroll BLOCK\_NR` applied, the entire MR×NR (16×6) micro-kernel computation is fully unrolled, exposing maximum instruction-level parallelism.
+
+```c
+// Initialize C_micro[][] = 0
+\#pragma unroll BLOCK\_NR
+for( int j0\_r = 0; j0\_r < BLOCK\_NR; ++j0\_r  )
+  \#pragma unroll BLOCK\_MR
+  for( int i0\_r = 0; i0\_r < BLOCK\_MR; ++i0\_r  )
+    {
+      C\_micro[j0\_r][i0\_r] = 0.0f;
+    }
+
+// Rank-K update with BLOCK_KU and MR/NR unrolling
+for( int p0\_i = 0; p0\_i < block\_kc\_remainder; p0\_i += BLOCK\_KU )
+  \#pragma unroll BLOCK\_KU
+  for( int p0\_u = 0; p0\_u < BLOCK\_KU; ++ p0\_u )
+    \#pragma unroll BLOCK\_NR
+    for( int j0\_r = 0; j0\_r < BLOCK\_NR; ++j0\_r  )
+      \#pragma unroll BLOCK\_MR
+      for( int i0\_r = 0; i0\_r < BLOCK\_MR; ++i0\_r  )
+        {
+          int j0\_i\_bid = j0\_i/(BLOCK\_NR);
+          int i0\_i\_bid = i0\_i/(BLOCK\_MR);
+
+          float A\_ip = A\_dlt[i0\_i\_bid][p0\_i+p0\_u][i0\_r];
+          float B\_pj = B\_dlt[j0\_i\_bid][p0\_i+p0\_u][j0\_r];
+
+          C\_micro[j0\_r][i0\_r] += A\_ip*B\_pj;
+        }
+
+// Write-back C_micro[][] to C_distributed[][]
+\#pragma unroll BLOCK\_NR
+for( int j0\_r = 0; j0\_r < BLOCK\_NR; ++j0\_r  )
+  \#pragma unroll BLOCK\_MR
+  for( int i0\_r = 0; i0\_r < BLOCK\_MR; ++i0\_r  )
+    {
+      int j0 = j0\_o + j0\_i + j0\_r;
+      int i0 = i0\_o + i0\_i + i0\_r;
+
+      C\_distributed[i0 * cs\_C + j0 * rs\_C] += C\_micro[j0\_r][i0\_r];
+    }
+```
 
 2. PERFORMANCE ANALYSIS
 --------------------------------------------------------------------------------
-Performance data from CSV files:
-
-Performance data not available in CSV format
+Variant 13 (iteration 17): 128x128x128 = 7.08 GFLOPs
+Variant 14 (iteration 18): 128x128x128 = 7.15 GFLOPs (+1.0% improvement)
 
 Corresponding plot: results/plot\_iter\_18\_tuned\_variant14\_op\_nr\_ilp.png
 
 
 3. EXPLANATION AND HYPOTHESIS
 --------------------------------------------------------------------------------
-Instruction-level parallelism (ILP) optimization through loop unrolling
-allows multiple independent operations to execute simultaneously on modern
-superscalar processors, improving throughput.
+**Marginal Improvement**: CSV data shows +1.0\% gain (7.08 \textrightarrow 7.15 GFLOPs). The addition of NR-dimension unrolling with `\#pragma unroll BLOCK\_NR` creates a fully unrolled MR×NR micro-kernel with no remaining loops, exposing BLOCK\_MR × BLOCK\_NR = 16 × 6 = 96 independent FMA operations per rank-K iteration.
 
-To test this hypothesis:
-- Profile cache miss rates (perf stat -e cache-misses,cache-references)
-- Analyze instruction mix and IPC (instructions per cycle)
+Hypothesis: Unrolling NR was not as beneficial as unrolling MR (iteration 17) because:
+1. NR=6 is small compared to MR=16, so conditional on which dimension limits ILP potential
+2. Register allocator may struggle with many more accumulators (now 96 instead of 16)
+3. Instruction cache pressure increases; micro-kernel size grows
+
+However, the marginal +1.0\% improvement suggests fully unrolled MR×NR is slightly better than MR-only unrolling, likely because:
+- NR loop elimination reduces any remaining branching overhead
+- Compiler can schedule j0\_r and i0\_r loop bodies with fewer constraints
+- Better memory prefetch alignment in the inner loop
+
+To continue improving from this heavily unrolled baseline:
+- SIMD vectorization will be essential to overcome scalar FMA latency limitations
+- The 64\% performance gap below iteration 13 baseline (20.14 GFLOPs) remains because iteration 14's n-fringe architectural violation is still not fixed
+- Micro-kernel is now at maximum manual unrolling; vector instructions are next lever
 - Vary block sizes to find optimal values for target architecture
 - Compare performance across different matrix sizes and shapes

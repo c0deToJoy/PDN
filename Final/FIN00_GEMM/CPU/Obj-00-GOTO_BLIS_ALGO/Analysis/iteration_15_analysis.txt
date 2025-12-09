@@ -3,31 +3,76 @@ ITERATION 15: tuned\_variant11\_op\_minimize\_kc\_zerowork
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Eliminates unnecessary zero work in the k-dimension by skipping blocks that don't contribute:
+Eliminates zero-work in the k-dimension by using block\_kc\_remainder as the micro-kernel loop bound instead of the constant BLOCK\_KC:
 
 ```c
-if (pb == 0) continue; // Skip zero-sized k-blocks
+// Outer loop iteration
+for( int p0\_o = 0; p0\_o < k0; p0\_o += BLOCK\_KC )
+  {
+    int block\_kc\_remainder = min(BLOCK\_KC, k0-p0\_o);
+    
+    // Pack B and A with full BLOCK\_KC allocation but only use valid data
+    float B\_dlt[num\_j0\_i\_blocks][BLOCK\_KC][BLOCK\_NR];
+    // ... packing loops iterate over BLOCK\_KC ...
+    
+    // Kernel loops
+    for( int j0\_i = 0; j0\_i < block\_nc\_remainder; j0\_i += BLOCK\_NR )
+      for( int i0\_i = 0; i0\_i < block\_mc\_remainder; i0\_i += BLOCK\_MR  )
+      {
+        // Micro-kernel now uses block\_kc\_remainder instead of BLOCK\_KC
+        for( int p0\_i = 0; p0\_i < block\_kc\_remainder; ++p0\_i )
+          for( int j0\_r = 0; j0\_r < BLOCK\_NR; ++j0\_r  )
+            for( int i0\_r = 0; i0\_r < BLOCK\_MR; ++i0\_r  )
+            {
+              int j0 = j0\_o + j0\_i + j0\_r;
+              int i0 = i0\_o + i0\_i + i0\_r;
+              int p0 = p0\_o + p0\_i;
+              
+              int j0\_i\_bid = j0\_i/(BLOCK\_NR);
+              int i0\_i\_bid = i0\_i/(BLOCK\_MR);
+              
+              float A\_ip = A\_dlt[i0\_i\_bid][p0\_i][i0\_r];
+              float B\_pj = B\_dlt[j0\_i\_bid][p0\_i][j0\_r];
+              
+              C\_micro[j0\_r][i0\_r] += A\_ip*B\_pj;
+            }
+      }
+  }
 ```
 
-This optimization avoids packing and computing empty blocks when k is not evenly divisible by BLOCK\\_KC.
+This avoids redundant computation over zero-padded k-fringe elements.
 
 2. PERFORMANCE ANALYSIS
 --------------------------------------------------------------------------------
 Performance data from CSV files:
 
-Performance data not available in CSV format
+Variant 10 (iteration 14): 128x128x128 = 5.63 GFLOPs
+Variant 11 (iteration 15): 128x128x128 = 7.74 GFLOPs (+37.5\% improvement from iteration 14)
+
+Note: Both iterations remain far below iteration 13 baseline (20.14 GFLOPs) due to 
+broken fringe handling from iteration 14.
 
 Corresponding plot: results/plot\_iter\_15\_tuned\_variant11\_op\_minimize\_kc\_zerowork.png
 
 
 3. EXPLANATION AND HYPOTHESIS
 --------------------------------------------------------------------------------
-Performance change is due to incremental refinement of the algorithm.
-Likely improvements in code generation, reduced overhead, or better
-utilization of existing optimizations.
+**Modest Partial Recovery**: CSV data shows ~37.5\% improvement from iteration 14
+(e.g., 128x128x128: 5.63 \textrightarrow 7.74 GFLOPs), but remains 61.6\% below iteration 13
+baseline (20.14 GFLOPs). This improvement comes from avoiding redundant zero-work in
+k-fringe iterations, but the fundamental architectural problem from iteration 14 persists.
 
-To test this hypothesis:
-- Profile cache miss rates (perf stat -e cache-misses,cache-references)
-- Analyze instruction mix and IPC (instructions per cycle)
-- Vary block sizes to find optimal values for target architecture
-- Compare performance across different matrix sizes and shapes
+Hypothesis for recovery: Using block\_kc\_remainder in the micro-kernel innermost loop 
+eliminates useless FMA operations on zero-padded data. The runtime-variable k-loop bound 
+still prevents compiler loop unrolling, but the reduction in actual work provides a modest 
+performance gain. However, the primary bottleneck remains the broken n-fringe minimization 
+(iteration 14), which shattered cache blocking efficiency.
+
+**Critical Path**: This iteration demonstrates partial mitigation of iteration 14's 
+catastrophic damage, but full recovery requires reverting to iteration 13's fringe strategy
+as recommended in iteration 14's analysis.
+
+To recover performance:
+- Immediately revert n0\_fringe\_start to n0 - (n0\%(BLOCK\_NC)) (see iteration 14 analysis)
+- Keep block\_kc\_remainder optimization from iteration 15 as a valid refinement
+- Expected performance after revert: return to ~20+ GFLOPs baseline
