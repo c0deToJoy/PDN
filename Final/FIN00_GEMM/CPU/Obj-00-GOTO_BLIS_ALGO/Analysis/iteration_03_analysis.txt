@@ -15,22 +15,14 @@ Separate loops handle the steady-state (0 to fringe\\_start) and fringe (fringe\
 
 2. PERFORMANCE ANALYSIS
 --------------------------------------------------------------------------------
-Performance data from CSV files:
+Variant 01 (iteration 2 - basic blocking): 128x128x128 = 26.18 GFLOPs
+Variant 000 (iteration 3 - fringe splitting): 128x128x128 = 22.79 GFLOPs (-12.9% regression)
 
-Performance data not available in CSV format
-
-Corresponding plot: results/plot\_iter\_03\_tuned\_variant000\_index\_set\_split.png
+Corresponding plot: results/plot_iter_03_tuned_variant000_index_set_split.png
 
 
 3. EXPLANATION AND HYPOTHESIS
 --------------------------------------------------------------------------------
-This iteration introduces explicit fringe case handling by splitting the
-index sets into main blocks and remainder blocks. This cleaner handling of
-edge cases may improve performance slightly by avoiding conditional logic
-in the main computation loop.
+**Performance Regression**: CSV data shows -12.9% regression (26.18 \textrightarrow 22.79 GFLOPs). While fringe splitting should theoretically eliminate branching overhead in the steady-state loop by separating computations into independent loop nests, the overall performance degrades. The regression likely stems from: (1) **Code duplication overhead**: maintaining two separate loop nests increases instruction cache pressure and instruction fetch latency, (2) **Reduced loop fusion opportunities**: the compiler cannot optimize across the steady-state and fringe loops as it could with a single unified loop, (3) **Fringe loop overhead**: for problems that don't align perfectly with block boundaries, the fringe loop execution overhead (context switching, cache effects) may dominate the savings from branch elimination, (4) **Loop unrolling constraints**: the duplicate loop structure provides less optimization context for the compiler to unroll effectively.
 
-To test this hypothesis:
-- Profile cache miss rates (perf stat -e cache-misses,cache-references)
-- Analyze instruction mix and IPC (instructions per cycle)
-- Vary block sizes to find optimal values for target architecture
-- Compare performance across different matrix sizes and shapes
+Key insight: Branch elimination through code duplication is only beneficial when the steady-state loop is executed far more frequently than the fringe loop and when the compiler can maintain global optimization context. At 128\times128\times128 with BLOCK_NC=192, BLOCK_KC=128, BLOCK_MC=128, the fringe regions are substantial, making the optimization trade-off unfavorable.

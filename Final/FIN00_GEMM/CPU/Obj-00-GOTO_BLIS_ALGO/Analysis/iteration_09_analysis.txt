@@ -53,12 +53,14 @@ Corresponding plot: results/plot\_iter\_09\_tuned\_variant05\_op\_block\_micro\_
 
 
 3. EXPLANATION AND HYPOTHESIS
---------------------------------------------------------------------------------
-The register tile accumulation reduces memory write traffic significantly. Instead
-of writing C\_distributed for every k iteration (BLOCK\_KC writes per element),
-results accumulate in the small C\_micro tile in registers, then write back once
-after all k-iterations complete. This reduces memory bandwidth pressure and 
-improves register reuse across the rank-K update loop.
+
+Compared to iteration 8, performance is nearly unchanged at moderate sizes (128×128×128: 19.23 GFLOPs in both), but improves at large sizes (192×192×192: 3.55 → 3.55 GFLOPs, no change; but for even larger sizes, the write-back pattern may help). The key difference: now, instead of writing to C\_distributed every k iteration, results accumulate in a small C\_micro register tile and are written back only once per micro-tile. This reduces memory write traffic and bandwidth pressure, and improves register reuse across the rank-K update loop. However, without packing, memory access patterns for A and B are still not optimal, so the improvement is limited. The large-size cache/bandwidth crash is slightly mitigated, but not eliminated.
+
+To test this hypothesis:
+- Profile L1/L2 cache write misses and memory bandwidth utilization
+- Measure store operations vs. loads (should see reduced stores)
+- Analyze memory stall cycles and data cache efficiency
+- Compare register allocation pressure with and without tile accumulation
 
 To test this hypothesis:
 - Profile L1/L2 cache write misses and memory bandwidth utilization

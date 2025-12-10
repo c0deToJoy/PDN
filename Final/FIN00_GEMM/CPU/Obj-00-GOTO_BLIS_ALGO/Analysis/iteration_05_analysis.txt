@@ -12,11 +12,12 @@ int k0\_fringe\_start = k0 - (k0\%(BLOCK\_KC));
 // Steady State
 for( int j0\_o = 0; j0\_o < n0\_fringe\_start; j0\_o += BLOCK\_NC )
   {
-    // Steady State
-    for( int p0\_o = 0; p0\_o < k0\_fringe\_start; p0\_o += BLOCK\_KC )
-      for( int i0 = 0; i0 < m0; ++i0 )
-        for( int j0\_i = 0; j0\_i < BLOCK\_NC; ++j0\_i )
-          for( int p0\_i = 0; p0\_i < BLOCK\_KC; ++p0\_i )
+Performance data (GFLOPs, 2 ranks):
+- Variant 01 (iteration 4, NC only): 128×128×128 = 26.18
+- Variant 02 (iteration 5, NC + KC): 128×128×128 = 28.92 (+10.5%)
+- Variant 02 degrades to ~2–3 GFLOPs at 192×192×192 and larger
+
+Corresponding plot: results/plot_iter_05_tuned_variant02_op.png
           {
             int j0 = j0\_o + j0\_i;
             int p0 = p0\_o + p0\_i;
@@ -51,12 +52,11 @@ Corresponding plot: results/plot\_iter\_05\_tuned\_variant02\_op.png
 
 3. EXPLANATION AND HYPOTHESIS
 --------------------------------------------------------------------------------
-BLOCK\_KC introduces blocking in the k-dimension (reduction dimension).
-This ensures panels of A and B fit in cache during the inner product,
-significantly improving L2/L3 cache reuse.
+Good: Adding BLOCK_KC blocks the reduction dimension so A and B panels (m×BLOCK_KC, BLOCK_KC×n) stay resident in cache during the inner product, giving +10.5% at 128×128×128 versus iteration 4.
 
-To test this hypothesis:
-- Profile cache miss rates (perf stat -e cache-misses,cache-references)
-- Analyze instruction mix and IPC (instructions per cycle)
-- Vary block sizes to find optimal values for target architecture
-- Compare performance across different matrix sizes and shapes
+Why performance “crashes” at larger sizes: With NC=192 and KC=128, the combined A/B/C panel footprint grows past LLC once m,n,k reach 192, triggering cache thrash and bandwidth stalls; throughput falls to ~2–3 GFLOPs and may appear as a stall/regression.
+
+To validate and mitigate:
+- Profile cache misses (perf stat -e cache-misses,cache-references)
+- Check LLC fit for A/B/C panels at larger m,n,k
+- Reduce BLOCK_NC or BLOCK_KC to keep the working set within L3

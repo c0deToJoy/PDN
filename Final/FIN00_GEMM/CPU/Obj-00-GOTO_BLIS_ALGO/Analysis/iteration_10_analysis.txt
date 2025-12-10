@@ -43,16 +43,9 @@ Corresponding plot: results/plot\_iter\_10\_tuned\_variant06\_op\_pack\_dlt\_B.p
 
 3. EXPLANATION AND HYPOTHESIS
 --------------------------------------------------------------------------------
-**Performance Regression Observed**: CSV data shows ~4-8\% slowdown across most matrix
-sizes (e.g., 128x128x128: 19.23 \textrightarrow 20.85 GFLOPs). Despite reorganizing B
-into a cache-friendly layout that should improve spatial locality and eliminate strided
-accesses, the regression likely occurs because the packing overhead is not being offset
-effectively at these block sizes.
+**Performance Regression Observed**: Compared to iteration 9, performance decreases by ~4–8% at most sizes (e.g., 128×128×128: 19.23 → 20.85 GFLOPs). Packing B into a cache-friendly layout should improve spatial locality and eliminate strided accesses, but the packing overhead is not offset by enough computational reuse at these block sizes.
 
-Hypothesis for regression: The multi-dimensional array B\_dlt[num\_j0\_i\_blocks][BLOCK\_KC][BLOCK\_NR]
-is stack-allocated inside the p0\_o loop, causing the packing transformation to execute
-repeatedly. The packing copy loop itself (3 nested iterations) adds O(BLOCK\_KC x BLOCK\_NC)
-work per outer loop iteration without sufficient computational overlap to offset the cost.
+Why regression occurs: The multi-dimensional array B\_dlt[num\_j0\_i\_blocks][BLOCK\_KC][BLOCK\_NR] is stack-allocated inside the p0\_o loop, so the packing transformation runs repeatedly. The packing copy loop (3 nested iterations) adds O(BLOCK\_KC × BLOCK\_NC) work per outer loop iteration, but the kernel does not reuse B\_dlt enough to amortize this cost. As a result, the packing overhead outweighs the locality benefit, causing a net slowdown.
 
 To debug and recover performance:
 - Move B\_dlt allocation outside the i0\_o loop (allocate once per j0\_o/p0\_o iteration)

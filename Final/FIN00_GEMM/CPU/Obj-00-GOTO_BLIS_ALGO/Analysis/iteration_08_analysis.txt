@@ -40,12 +40,11 @@ Corresponding plot: results/plot\_iter\_08\_tuned\_variant05\_op\_block\_mr.png
 
 
 3. EXPLANATION AND HYPOTHESIS
---------------------------------------------------------------------------------
-BLOCK\_MR completes the micro-kernel with m-dimension register blocking.
-The MR x NR micro-kernel is now fully optimized for register tile computation.
+BLOCK\_MR completes the micro-kernel with m-dimension register blocking, so the innermost computation now works on MR×NR tiles (e.g., 16×6) that fit in registers.
 
-To test this hypothesis:
-- Profile cache miss rates (perf stat -e cache-misses,cache-references)
-- Analyze instruction mix and IPC (instructions per cycle)
-- Vary block sizes to find optimal values for target architecture
-- Compare performance across different matrix sizes and shapes
+Compared to iteration 7, performance is nearly unchanged at moderate sizes (128×128×128: 19.23 vs 19.94 GFLOPs), and the large-size crash persists (192×192×192: 3.55 vs 2.41 GFLOPs). The reason: while MR blocking should further improve register reuse, the code still lacks packing and a true fused microkernel, so memory access patterns and loop overhead remain limiting factors. The innermost loop is now even shorter, but strided accesses and lack of data reuse from packing mean the theoretical benefit is not realized. At large sizes, cache/bandwidth limits still dominate, though there is a slight improvement at 192³ due to better register tiling.
+
+To validate and improve:
+- Profile cache and register usage (perf stat -e cache-misses,cache-references,cycles)
+- Implement packing and a fused microkernel to fully exploit register blocking
+- Tune MR/NR/MC/KC/NC for architecture and problem size

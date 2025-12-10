@@ -39,13 +39,11 @@ Corresponding plot: results/plot\_iter\_07\_tuned\_variant04\_op\_block\_nr.png
 
 
 3. EXPLANATION AND HYPOTHESIS
---------------------------------------------------------------------------------
-BLOCK\_NR introduces micro-kernel blocking for register-level optimization.
-Small blocks are kept in registers for the innermost computation, enabling
-better instruction-level parallelism and register reuse.
+BLOCK\_NR introduces micro-kernel blocking for register-level optimization. This should improve register reuse and instruction-level parallelism by working on small tiles (MC×NR) that fit in CPU registers.
 
-To test this hypothesis:
-- Profile cache miss rates (perf stat -e cache-misses,cache-references)
-- Analyze instruction mix and IPC (instructions per cycle)
-- Vary block sizes to find optimal values for target architecture
-- Compare performance across different matrix sizes and shapes
+Compared to iteration 6, performance is similar at moderate sizes (128×128×128: 19.94 GFLOPs vs 19.37), but does not improve the large-size crash (192×192×192: 2.41 vs 2.29 GFLOPs). The reason: while NR blocking enables better register usage, the code still lacks packing and a true microkernel, so memory access patterns and loop overhead remain. The innermost loop is now shorter, but without packing, B accesses are still strided and register blocking alone cannot overcome cache/bandwidth limits. Net effect: no significant gain over iteration 6, and the LLC crash persists at large sizes.
+
+To validate and improve:
+- Profile cache and register usage (perf stat -e cache-misses,cache-references,cycles)
+- Implement packing and a fused microkernel to fully exploit register blocking
+- Tune NR/MC/KC/NC for architecture and problem size

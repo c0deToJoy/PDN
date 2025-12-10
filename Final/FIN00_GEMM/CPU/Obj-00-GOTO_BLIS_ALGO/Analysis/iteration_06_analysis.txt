@@ -47,11 +47,11 @@ Now all three dimensions are blocked: NC for L3, KC for L2, and MC for L1, creat
 
 2. PERFORMANCE ANALYSIS
 --------------------------------------------------------------------------------
-Performance data from CSV files:
+Performance data from CSV files (GFLOPs, 2 ranks):
+- Iteration 5 (NC+KC): 128×128×128 = 28.92; 192×192×192 = 2.23
+- Iteration 6 (NC+KC+MC): 128×128×128 = 19.37; 192×192×192 = 2.29
 
-Performance data not available in CSV format
-
-Corresponding plot: results/plot\_iter\_06\_tuned\_variant03\_op\_block\_mc.png
+Corresponding plot: results/plot_iter_06_tuned_variant03_op_block_mc.png
 
 
 3. EXPLANATION AND HYPOTHESIS
@@ -60,8 +60,11 @@ BLOCK\_MC adds blocking in the m-dimension (rows of C), creating the full
 3-level cache hierarchy blocking structure. This ensures the micro-panel
 of C fits in L1 cache while blocks of A and B fit in L2/L3, again, improving cache locality.
 
-To test this hypothesis:
-- Profile cache miss rates (perf stat -e cache-misses,cache-references)
-- Analyze instruction mix and IPC (instructions per cycle)
-- Vary block sizes to find optimal values for target architecture
-- Compare performance across different matrix sizes and shapes
+Why it should help: MC adds the final dimension of blocking so the C micro-panel (MC×NC) can stay in L1 while A/B panels stay in L2/L3, reducing cache misses versus a 2D block.
+
+Why it actually regresses vs iteration 5: Without packing or a tuned microkernel, the extra MC loop shortens inner loops and adds index arithmetic, so compiler vectorization and register reuse suffer. MC=128 also increases loop overhead and does not fix the strided B accesses; A/B/C footprints still push LLC at larger sizes, so the large-size crash remains. Net effect: higher overhead at moderate sizes (128³ drops from 28.92 → 19.37 GFLOPs) with no relief at 192³ (still ~2.3 GFLOPs).
+
+To validate and mitigate:
+- Profile cache/branch events (perf stat -e cache-misses,cache-references,branches,branch-misses)
+- Try smaller MC to lower overhead, or introduce packing + microkernel so MC blocking actually boosts reuse
+- Recheck LLC fit after tuning MC/NC/KC to avoid the 192³ collapse

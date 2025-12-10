@@ -3,33 +3,33 @@ ITERATION 24: tuned\_variant20\_op\_2d\_sharedmem
 
 1. CODE CHANGES FROM PREVIOUS ITERATION
 --------------------------------------------------------------------------------
-Extends 1D OpenMP parallelism to 2D work distribution with nested pragma directives. The outer loop distributes NC-blocks across PAR_COL_THREADS threads, and the inner loop distributes MC-blocks across PAR_ROW_THREADS threads. This provides better load balancing: each thread now works on an (MC x NC x KC) sub-block, reducing thread idle time.
+Extends 1D OpenMP parallelism to 2D work distribution with nested pragma directives. The outer loop distributes NC-blocks across PAR\_COL\_THREADS threads, and the inner loop distributes MC-blocks across PAR\_ROW\_THREADS threads. Each thread now works on an (MC x NC x KC) sub-block; the nested OpenMP pragmas distribute work across both N (columns) and M (rows) dimensions, improving load balancing and reducing thread idle time.
 
 ```c
 // 2D shared-memory parallelism: NC x MC decomposition
-int num_j0_i_blocks = (BLOCK_NC) / (BLOCK_NR);
-int num_i0_i_blocks = (BLOCK_MC) / (BLOCK_MR);
+int num\_j0\_i\_blocks = (BLOCK\_NC) / (BLOCK\_NR);
+int num\_i0\_i\_blocks = (BLOCK\_MC) / (BLOCK\_MR);
 
 // Outer level: distribute NC-blocks across column threads
-#pragma omp parallel for num_threads(PAR_COL_THREADS)
-for( int j0_o = 0; j0_o < n0_fringe_start; j0_o += BLOCK_NC )
+\#pragma omp parallel for num\_threads(PAR\_COL\_THREADS)
+for( int j0\_o = 0; j0\_o < n0\_fringe\_start; j0\_o += BLOCK\_NC )
   {
-    int block_nc_remainder = min(BLOCK_NC, n0_fringe_start-j0_o);
+    int block\_nc\_remainder = min(BLOCK\_NC, n0\_fringe\_start-j0\_o);
     
-    for( int p0_o = 0; p0_o < k0; p0_o += BLOCK_KC )
+    for( int p0\_o = 0; p0\_o < k0; p0\_o += BLOCK\_KC )
       {
         // Pack B (shared within column thread)
-        float B_dlt[num_j0_i_blocks][BLOCK_KC][BLOCK_NR];
+        float B\_dlt[num\_j0\_i\_blocks][BLOCK\_KC][BLOCK\_NR];
         
         // Inner level: distribute MC-blocks across row threads
-        #pragma omp parallel for num_threads(PAR_ROW_THREADS)
-        for( int i0_o = 0; i0_o < m0_fringe_start; i0_o += BLOCK_MC )
+        \#pragma omp parallel for num\_threads(PAR\_ROW\_THREADS)
+        for( int i0\_o = 0; i0\_o < m0\_fringe\_start; i0\_o += BLOCK\_MC )
           {
             // Pack A (private to row thread)
-            float A_dlt[num_i0_i_blocks][BLOCK_KC][BLOCK_MR/PAR_VECT_LEN][PAR_VECT_LEN];
+            float A\_dlt[num\_i0\_i\_blocks][BLOCK\_KC][BLOCK\_MR/PAR\_VECT\_LEN][PAR\_VECT\_LEN];
             
             // Micro-kernel computation with SIMD
-            // Each (row_thread, col_thread) pair computes independent MC x NC x KC block
+            // Each (row\_thread, col\_thread) pair computes independent MC x NC x KC block
           }
       }
   }
@@ -45,26 +45,4 @@ Corresponding plot: results/plot_iter_24_tuned_variant20_op_2d_sharedmem.png
 
 3. EXPLANATION AND HYPOTHESIS
 --------------------------------------------------------------------------------
-**Significant Improvement**: CSV data shows +23.6% gain (47.16 \textrightarrow 58.29 GFLOPs) by extending to 2D parallelism. The nested OpenMP pragmas distribute work across both N (columns) and M (rows) dimensions, improving load balancing and reducing thread idle time.
-
-Hypothesis for improvement:
-1. Better load distribution: With 1D, one thread is idle if problem size < BLOCK_NC. With 2D, even small problems can use multiple threads
-2. Reduced synchronization bottleneck: Nested parallel regions provide finer-grained work units (MC x NC x KC instead of NC x KC)
-3. Cache locality improves: Each thread processes a smaller working set that fits better in L2 cache
-4. Contention on C_distributed reduced: Threads write to disjoint row ranges, reducing cache line conflicts
-
-Performance recovery:
-- 58.29 GFLOPs is 96.7% of iteration 22 sequential baseline (60.25 GFLOPs)
-- Loss of 3.3% is minimal synchronization overhead for 2D parallelism
-- On larger matrices with more work units, 2D parallelism would achieve near-perfect scaling
-
-Comparison across threading variants:
-- Iteration 22 (sequential SIMD): 60.25 GFLOPs (baseline)
-- Iteration 23 (1D OpenMP): 47.16 GFLOPs (-21.8%, poor scaling on small problem)
-- Iteration 24 (2D OpenMP): 58.29 GFLOPs (-3.3%, excellent scaling)
-
-Key insights:
-- 2D parallelism provides better load balancing than 1D for small problems
-- OpenMP overhead is well-amortized with nested loops
-- SIMD vectorization remains dominant performance driver (60+ GFLOPs requires AVX2)
-- For larger matrices, 2D parallelism would approach or exceed single-thread SIMD baseline
+**Size-Dependent Performance**: CSV data reveals mixed results across problem sizes. At 128×128×128: +23.6% improvement (47.16 \textrightarrow 58.29 GFLOPs). However, at smaller sizes (16-112) and some larger sizes (144), iteration 24 performs **worse** than iteration 23. There is only optimal alignment between 2D thread decomposition and cache architecture at mid-range problem sizes, while other sizes suffer from increased nested parallelism overhead (two levels of barriers, thread team creation) without corresponding load balance benefits. This demonstrates 2D parallelism's sensitivity to the relationship between problem size, block dimensions, and thread count.

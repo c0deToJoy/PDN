@@ -56,7 +56,7 @@ Corresponding plot: results/plot\_iter\_18\_tuned\_variant14\_op\_nr\_ilp.png
 
 3. EXPLANATION AND HYPOTHESIS
 --------------------------------------------------------------------------------
-**Marginal Improvement**: CSV data shows +1.0\% gain (7.08 \textrightarrow 7.15 GFLOPs). The addition of NR-dimension unrolling with `\#pragma unroll BLOCK\_NR` creates a fully unrolled MR×NR micro-kernel with no remaining loops, exposing BLOCK\_MR × BLOCK\_NR = 16 × 6 = 96 independent FMA operations per rank-K iteration.
+**Marginal Improvement**: CSV data shows +1.0\% gain (7.08 \textrightarrow 7.15 GFLOPs). The addition of NR-dimension unrolling with `\#pragma unroll BLOCK\_NR` creates a fully unrolled MR×NR micro-kernel with no remaining loops, exposing BLOCK\_MR × BLOCK\_NR = 16 × 6 = 96 independent FMA operations per rank-K iteration which improves instruction-level parallelism.
 
 Hypothesis: Unrolling NR was not as beneficial as unrolling MR (iteration 17) because:
 1. NR=6 is small compared to MR=16, so conditional on which dimension limits ILP potential

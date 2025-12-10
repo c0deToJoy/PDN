@@ -60,7 +60,7 @@ Corresponding plot: results/plot\_iter\_19\_tuned\_variant15\_op\_presimd\_data\
 
 3. EXPLANATION AND HYPOTHESIS
 --------------------------------------------------------------------------------
-**Negligible Improvement**: CSV data shows only +0.1\% gain (7.15 \textrightarrow 7.16 GFLOPs), essentially no change. The reorganization of C\_micro from flat 2D `[BLOCK\_NR][BLOCK\_MR]` to 3D `[BLOCK\_NR][BLOCK\_MR/PAR\_VECT\_LEN][PAR\_VECT\_LEN]` is a pure data layout restructuring with no new computation changes.
+**Negligible Improvement**: CSV data shows only +0.1\% gain (7.15 \textrightarrow 7.16 GFLOPs), essentially no change. The reorganization of C\_micro from flat 2D `[BLOCK\_NR][BLOCK\_MR]` to 3D `[BLOCK\_NR][BLOCK\_MR/PAR\_VECT\_LEN][PAR\_VECT\_LEN]` is a pure data layout restructuring with no new computation changes. 
 
 Hypothesis for negligible improvement:
 1. Index calculations `[i0\_r/PAR\_VECT\_LEN][i0\_r\%PAR\_VECT\_LEN]` introduce division and modulo operations in the hot inner loop

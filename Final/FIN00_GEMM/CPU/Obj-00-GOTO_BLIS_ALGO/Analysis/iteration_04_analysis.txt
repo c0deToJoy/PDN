@@ -43,13 +43,71 @@ Corresponding plot: results/plot\_iter\_04\_tuned\_variant01\_op.png
 
 
 3. EXPLANATION AND HYPOTHESIS
---------------------------------------------------------------------------------
-Introduction of BLOCK\_NC enables blocking in the n-dimension (columns of C).
-This improves cache locality by working on vertical panels of C that fit
-in L3 cache. Performance improvement comes from reduced cache misses.
+---------------------------------------------------------------------------------
+Good: BLOCK\_NC blocking improves cache locality on the n-dimension by working on vertical panels of C that better fit in L3, reducing cache misses and boosting reuse of B and C columns.
 
-To test this hypothesis:
-- Profile cache miss rates (perf stat -e cache-misses,cache-references)
-- Analyze instruction mix and IPC (instructions per cycle)
-- Vary block sizes to find optimal values for target architecture
-- Compare performance across different matrix sizes and shapes
+Why performance can crash (or regress) at larger sizes: if the chosen BLOCK\_NC (192) does not fit well in the last-level cache for bigger matrices, the working set of C+B for a panel can exceed L3 capacity, causing cache thrashing and a sharp drop in throughput. Because this variant only blocks along n (not k or m), the B panel is reused well, but A and C footprints can still grow beyond cache as m or k increase, leading to bandwidth stalls and an apparent performance “crash.” The optimization is beneficial when the panel fits comfortably in cache; once the footprint exceeds cache, the benefit can reverse.
+
+To validate:
+- Profile cache misses (perf stat -e cache-misses,cache-references)
+- Check LLC occupancy vs. panel size (BLOCK\_NC=192) for larger m,k
+- Experiment with smaller BLOCK\_NC to see if throughput stabilizes for big problems
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

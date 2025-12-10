@@ -60,27 +60,22 @@ Corresponding plot: results/plot\_iter\_17\_tuned\_variant13\_op\_mr\_ilp.png
 
 3. EXPLANATION AND HYPOTHESIS
 --------------------------------------------------------------------------------
-**Modest Performance Improvement**: CSV data shows ~18.2\% gain (e.g., 128x128x128: 5.99 \textrightarrow 
-7.08 GFLOPs). The MR-dimension loop unrolling with `\#pragma unroll BLOCK\_MR` successfully exposes 
-BLOCK\_MR independent FMA operations per j0\_r iteration, allowing the compiler to better schedule 
-instructions and increase instruction-level parallelism.
+**Mixed Performance Results**: CSV data reveals size-dependent behavior. At 128x128x128: +18.2% gain (5.99 \textrightarrow 7.08 GFLOPs). However, at smaller sizes (16-96) iteration 17 shows **marginal or negative** change, and at larger sizes (176+) both variants converge to 7.01 GFLOPs (iteration 17 slightly worse or equal).
 
-Hypothesis for improvement: Unrolling the i0\_r loop creates BLOCK\_MR (16) separate accumulator 
-accesses to C\_micro[j0\_r][i0\_r], each with independent data dependencies. This enables the CPU's 
-superscalar execution to issue multiple FMA instructions in parallel rather than waiting for one 
-accumulator to complete before starting the next. Combined with the k-dimension unrolling from 
-iteration 16 (BLOCK\_KU=8), the micro-kernel now exposes enough ILP to partially hide the 
-memory latency and improve utilization of execution ports.
+Hypothesis for size-dependent behavior:
+1. **Smaller matrices (16-96)**: MR unrolling increases register pressure without sufficient ILP window, causing degradation relative to iteration 16's conservative k-only unrolling
+2. **Sweet spot (112-128)**: MR unrolling benefits from optimal balance of register availability and instruction scheduling window, providing 18% improvement
+3. **Larger matrices (144+)**: Both variants converge as memory bandwidth becomes bottleneck; unrolling overhead dominates, causing iteration 17 to regress or match iteration 16
 
-However, improvement remains modest because:
-1. Underlying performance baseline is still 61.8\% below iteration 13 (20.14 GFLOPs) due to broken 
-   n-fringe minimization from iteration 14
-2. Register pressure may be starting to increase with both k and MR unrolling active
-3. Without SIMD vectorization, scalar FMA latency (4-5 cycles on modern CPUs) limits how much 
-   ILP can help
+The MR-dimension loop unrolling with `\#pragma unroll BLOCK\_MR` exposes BLOCK\_MR (16) independent accumulator accesses per j0\_r iteration, allowing better compiler scheduling on problems where the micro-kernel execution window aligns with CPU superscalar capabilities. Combined with k-dimension unrolling (BLOCK\_KU=8), this creates 16×8 = 128 instruction-level parallelism opportunities.
 
-To sustain and improve further:
-- Keep MR unrolling; modest gains confirm ILP extraction benefits
-- Avoid further unrolling (NR) until cache blocking is restored
-- Prepare for SIMD vectorization which will dramatically improve baseline performance
-- Monitor register usage (objdump or perf) to ensure no spilling
+However, this approach has fundamental limitations:
+1. Register pressure increases significantly with both k and MR unrolling—larger matrices suffer from spilling
+2. Underlying baseline still 61.8\% below iteration 13 (20.14 GFLOPs) due to broken n-fringe minimization from iteration 14
+3. Without SIMD vectorization, scalar FMA latency (4-5 cycles) limits ILP effectiveness
+4. Benefit is problem-size dependent; not universally applicable
+
+To realize sustainable improvements:
+- MR unrolling helps only in specific size ranges; regression on larger problems suggests register overflow
+- SIMD vectorization (next iteration) is essential to overcome both register pressure and scalar FMA latency
+- Consider dynamic unrolling strategies or problem-size-aware compilation
