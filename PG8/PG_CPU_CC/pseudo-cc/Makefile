@@ -21,6 +21,8 @@ test-local: compile-local
 compile-local:
 	nvcc hw_code.cu  -o ./run_hw.x
 
+test: test-local
+
 # FOR SCHOONER
 # Use *-schooner if you are on schooner
 compile-schooner:
