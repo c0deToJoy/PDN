@@ -193,7 +193,7 @@ __global__ void student_bcast(int root_tid, float *input_sequential, float *outp
     /*
       STUDENT_TODO
     */
-    output_sequential[tid] = 0; //FIXME! 
+    output_sequential[tid] = shared_memory[tid];
     /*
       END_STUDENT_TODO
     */
@@ -351,7 +351,7 @@ __global__ void student_reduction( int root_tid,
 	output_sequential[root_tid] = 0.0f;
 	for(int src_tid = 0; src_tid < num_threads; src_tid++)
 	  {
-	    output_sequential[root_tid] += 0; //FIXME!
+	    output_sequential[root_tid] += shared_memory[src_tid];
 	  }
       }
     /*
@@ -468,7 +468,7 @@ __global__  void student_scatter(int root_tid,
     /*
       STUDENT_TODO
     */
-    output_sequential[tid] = 0; //FIXME!
+    output_sequential[tid] = shared_memory[tid];
     /*
       END_STUDENT_TODO
     */
@@ -615,7 +615,7 @@ __global__ void student_gather( int root_tid,
       {
 	for(int src_tid = 0; src_tid < num_threads; src_tid++)
 	  {
-	    output_sequential[src_tid + root_tid*num_threads] = 0; //FIXME!
+	    output_sequential[src_tid + root_tid*num_threads] = shared_memory[src_tid];
 	  }
       }
     /*
@@ -747,7 +747,7 @@ __global__ void student_all_reduce( float *src_sequential,
     output_sequential[tid] = 0.0f;
     for(int src_tid = 0; src_tid < num_threads; src_tid++)
       {
-	output_sequential[tid] += 0; //FIXME!
+	output_sequential[tid] += shared_memory[src_tid];
       }
 
     /*
@@ -885,7 +885,7 @@ __global__ void student_all_gather( float *src_sequential,
     */
     for(int src_tid = 0; src_tid < num_threads; src_tid++)
       {
-	output_sequential[src_tid + tid*num_threads] = 0; //FIXME!
+	output_sequential[src_tid + tid*num_threads] = shared_memory[src_tid];
       }
 
     /*
@@ -1026,7 +1026,7 @@ __global__ void student_all_to_all( float *src_sequential,
       STUDENT_TODO
     */
     for( int i = 0; i < num_threads; ++i )
-      output_sequential[i + tid*num_threads] =  0; //FIXME!
+      output_sequential[i + tid*num_threads] = shared_memory[tid + i*num_threads];
 
 
     /*
